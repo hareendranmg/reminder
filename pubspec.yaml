@@ -1,0 +1,50 @@
+name: reminder
+description: "A Material 3 reminder app for Linux with non-dismissible alert windows."
+publish_to: 'none'
+version: 1.0.0
+
+environment:
+  sdk: ^3.10.8
+
+dependencies:
+  flutter:
+    sdk: flutter
+  
+  # State Management
+  flutter_riverpod: ^3.2.0
+  
+  # Database
+  drift: ^2.30.1
+  drift_flutter: ^0.2.8
+  sqlite3_flutter_libs: ^0.5.41
+  
+  # Window Management
+  window_manager: 0.5.1
+  desktop_multi_window: ^0.3.0
+  system_tray: ^2.0.3
+  
+  # UI/Animations
+  flutter_animate: ^4.5.2
+  animations: ^2.1.1
+  
+  # Utilities
+  uuid: ^4.5.2
+  intl: ^0.20.2
+  path_provider: ^2.1.5
+  path: ^1.9.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+  drift_dev: ^2.30.1
+  build_runner: ^2.10.5
+
+dependency_overrides:
+  uuid: ^4.5.2
+
+flutter:
+  uses-material-design: true
+  
+  assets:
+    - assets/icons/
