@@ -24,6 +24,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     with SingleTickerProviderStateMixin, WindowListener {
   late AnimationController _fabController;
   final TextEditingController _searchController = TextEditingController();
+  final FocusNode _searchFocusNode = FocusNode();
+  final FocusNode _mainFocusNode = FocusNode();
   bool _isSearchActive = false;
 
   @override
@@ -46,6 +48,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     windowManager.removeListener(this);
     _fabController.dispose();
     _searchController.dispose();
+    _searchFocusNode.dispose();
+    _mainFocusNode.dispose();
     super.dispose();
   }
 
@@ -82,9 +86,20 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             _showCreateReminderDialog,
         const SingleActivator(LogicalKeyboardKey.keyF, control: true): () {
           setState(() => _isSearchActive = true);
+          _searchFocusNode.requestFocus();
+        },
+        const SingleActivator(LogicalKeyboardKey.escape): () {
+          setState(() {
+            _isSearchActive = false;
+            _searchController.clear();
+          });
+          _searchFocusNode.unfocus();
+          _mainFocusNode.requestFocus();
+          ref.read(searchQueryProvider.notifier).state = '';
         },
       },
       child: Focus(
+        focusNode: _mainFocusNode,
         autofocus: true,
         child: Scaffold(
           backgroundColor: colorScheme.surface,
@@ -152,6 +167,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             Expanded(
               child: TextField(
                 controller: _searchController,
+                focusNode: _searchFocusNode,
                 autofocus: true,
                 decoration: InputDecoration(
                   hintText: 'Search reminders...',
