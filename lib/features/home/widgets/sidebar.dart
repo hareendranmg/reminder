@@ -15,6 +15,7 @@ class Sidebar extends ConsumerWidget {
     final currentFilter = ref.watch(reminderFilterProvider);
     final todayCount = ref.watch(todayRemindersCountProvider);
     final upcomingCount = ref.watch(upcomingRemindersCountProvider);
+    final currentView = ref.watch(currentViewProvider);
 
     return Container(
       color: colorScheme.surfaceContainerLow,
@@ -36,7 +37,9 @@ class Sidebar extends ConsumerWidget {
                   ref,
                   filter: ReminderFilter.today,
                   icon: Icons.today_rounded,
-                  isSelected: currentFilter == ReminderFilter.today,
+                  isSelected:
+                      currentView == AppView.reminders &&
+                      currentFilter == ReminderFilter.today,
                   isExpanded: isExpanded,
                   count: todayCount.value ?? 0,
                 ),
@@ -46,7 +49,9 @@ class Sidebar extends ConsumerWidget {
                   ref,
                   filter: ReminderFilter.upcoming,
                   icon: Icons.upcoming_rounded,
-                  isSelected: currentFilter == ReminderFilter.upcoming,
+                  isSelected:
+                      currentView == AppView.reminders &&
+                      currentFilter == ReminderFilter.upcoming,
                   isExpanded: isExpanded,
                   count: upcomingCount.value ?? 0,
                 ),
@@ -56,7 +61,9 @@ class Sidebar extends ConsumerWidget {
                   ref,
                   filter: ReminderFilter.past,
                   icon: Icons.history_rounded,
-                  isSelected: currentFilter == ReminderFilter.past,
+                  isSelected:
+                      currentView == AppView.reminders &&
+                      currentFilter == ReminderFilter.past,
                   isExpanded: isExpanded,
                 ),
                 const SizedBox(height: 4),
@@ -65,7 +72,9 @@ class Sidebar extends ConsumerWidget {
                   ref,
                   filter: ReminderFilter.all,
                   icon: Icons.inbox_rounded,
-                  isSelected: currentFilter == ReminderFilter.all,
+                  isSelected:
+                      currentView == AppView.reminders &&
+                      currentFilter == ReminderFilter.all,
                   isExpanded: isExpanded,
                 ),
               ],
@@ -183,6 +192,7 @@ class Sidebar extends ConsumerWidget {
           clipBehavior: Clip.hardEdge,
           child: InkWell(
             onTap: () {
+              ref.read(currentViewProvider.notifier).state = AppView.reminders;
               ref.read(reminderFilterProvider.notifier).state = filter;
             },
             borderRadius: BorderRadius.circular(12),
@@ -208,6 +218,7 @@ class Sidebar extends ConsumerWidget {
       clipBehavior: Clip.hardEdge,
       child: InkWell(
         onTap: () {
+          ref.read(currentViewProvider.notifier).state = AppView.reminders;
           ref.read(reminderFilterProvider.notifier).state = filter;
         },
         borderRadius: BorderRadius.circular(12),
@@ -274,10 +285,48 @@ class Sidebar extends ConsumerWidget {
   }
 
   Widget _buildFooter(BuildContext context, WidgetRef ref, bool isExpanded) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final currentView = ref.watch(currentViewProvider);
+    final isSettingsSelected = currentView == AppView.settings;
 
     if (!isExpanded) {
-      return const SizedBox(height: 12);
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 12),
+        child: Center(
+          child: Tooltip(
+            message: 'Settings',
+            child: Material(
+              color: Colors.transparent,
+              borderRadius: BorderRadius.circular(12),
+              clipBehavior: Clip.hardEdge,
+              child: InkWell(
+                onTap: () {
+                  ref.read(currentViewProvider.notifier).state =
+                      AppView.settings;
+                },
+                borderRadius: BorderRadius.circular(12),
+                child: Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: isSettingsSelected
+                        ? colorScheme.primaryContainer.withAlpha(179)
+                        : Colors.transparent,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(
+                    Icons.settings_rounded,
+                    color: isSettingsSelected
+                        ? colorScheme.onPrimaryContainer
+                        : colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
     }
 
     return Container(
@@ -286,26 +335,49 @@ class Sidebar extends ConsumerWidget {
         children: [
           Divider(color: colorScheme.outlineVariant.withAlpha(77)),
           const SizedBox(height: 8),
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            physics: const NeverScrollableScrollPhysics(),
-            child: SizedBox(
-              width: AppConstants.sidebarWidth - 24,
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.info_outline_rounded,
-                    size: 16,
-                    color: colorScheme.onSurfaceVariant.withAlpha(153),
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    'v${AppConstants.appVersion}',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: colorScheme.onSurfaceVariant.withAlpha(153),
+          Material(
+            color: Colors.transparent,
+            borderRadius: BorderRadius.circular(12),
+            clipBehavior: Clip.hardEdge,
+            child: InkWell(
+              onTap: () {
+                ref.read(currentViewProvider.notifier).state = AppView.settings;
+              },
+              borderRadius: BorderRadius.circular(12),
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
+                decoration: BoxDecoration(
+                  color: isSettingsSelected
+                      ? colorScheme.primaryContainer.withAlpha(179)
+                      : Colors.transparent,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.settings_rounded,
+                      size: 22,
+                      color: isSettingsSelected
+                          ? colorScheme.onPrimaryContainer
+                          : colorScheme.onSurfaceVariant,
                     ),
-                  ),
-                ],
+                    const SizedBox(width: 12),
+                    Text(
+                      'Settings',
+                      style: theme.textTheme.bodyLarge?.copyWith(
+                        fontWeight: isSettingsSelected
+                            ? FontWeight.w600
+                            : FontWeight.w500,
+                        color: isSettingsSelected
+                            ? colorScheme.onPrimaryContainer
+                            : colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),

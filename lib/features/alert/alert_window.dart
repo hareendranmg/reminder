@@ -32,7 +32,7 @@ class AlertWindowApp extends StatelessWidget {
   }
 }
 
-class AlertWindowScreen extends StatefulWidget {
+class AlertWindowScreen extends ConsumerStatefulWidget {
   final ReminderModel reminder;
   final int windowId;
 
@@ -43,7 +43,7 @@ class AlertWindowScreen extends StatefulWidget {
   });
 
   @override
-  State<AlertWindowScreen> createState() => _AlertWindowScreenState();
+  ConsumerState<AlertWindowScreen> createState() => _AlertWindowScreenState();
 }
 
 class _AlertWindowScreenState extends ConsumerState<AlertWindowScreen>
@@ -93,7 +93,13 @@ class _AlertWindowScreenState extends ConsumerState<AlertWindowScreen>
     final snoozeTime = DateTime.now().add(const Duration(minutes: 10));
 
     // Update reminder in database
-    final updatedReminder = widget.reminder.copyWith(scheduledAt: snoozeTime);
+    ReminderModel updatedReminder;
+
+    if (widget.reminder.isRecurring) {
+      updatedReminder = widget.reminder.copyWith(nextTriggerTime: snoozeTime);
+    } else {
+      updatedReminder = widget.reminder.copyWith(dateTime: snoozeTime);
+    }
 
     // We can use the global container here because we wrapped the app in ProviderScope
     await ref.read(reminderRepositoryProvider).updateReminder(updatedReminder);

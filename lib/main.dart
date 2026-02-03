@@ -3,12 +3,14 @@ import 'dart:convert';
 import 'package:desktop_multi_window/desktop_multi_window.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:window_manager/window_manager.dart';
 
 import 'app.dart';
 import 'core/constants/app_constants.dart';
 import 'data/models/reminder.dart';
 import 'features/alert/alert_window.dart';
+import 'features/settings/preferences_provider.dart';
 import 'services/window_service.dart';
 
 Future<void> main(List<String> args) async {
@@ -20,6 +22,9 @@ Future<void> main(List<String> args) async {
   final windowArgs = windowController.arguments;
 
   debugPrint('Window ID: ${windowController.windowId}, Args: "$windowArgs"');
+
+  // Initialize shared preferences
+  final prefs = await SharedPreferences.getInstance();
 
   // Check if this is a sub-window (alert window) by checking arguments
   if (windowArgs.isNotEmpty) {
@@ -50,6 +55,7 @@ Future<void> main(List<String> args) async {
 
         runApp(
           ProviderScope(
+            overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
             child: AlertWindowApp(reminder: reminder, windowId: windowId),
           ),
         );
@@ -63,5 +69,10 @@ Future<void> main(List<String> args) async {
   // Main window initialization - only reaches here if no valid sub-window args
   await WindowService.initializeMainWindow();
 
-  runApp(const ProviderScope(child: ReminderApp()));
+  runApp(
+    ProviderScope(
+      overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
+      child: const ReminderApp(),
+    ),
+  );
 }

@@ -174,6 +174,21 @@ class _ReminderCardState extends State<ReminderCard> {
                         onChanged: widget.onToggle,
                       ),
 
+                      // Edit button (shown on hover)
+                      AnimatedOpacity(
+                        opacity: _isHovered ? 1.0 : 0.0,
+                        duration: AppConstants.shortAnimation,
+                        child: IconButton(
+                          onPressed: widget.onTap,
+                          icon: Icon(
+                            Icons.edit_rounded,
+                            color: colorScheme.primary,
+                            size: 20,
+                          ),
+                          tooltip: 'Edit',
+                        ),
+                      ),
+
                       // Delete button (shown on hover)
                       AnimatedOpacity(
                         opacity: _isHovered ? 1.0 : 0.0,

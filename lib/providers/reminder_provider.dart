@@ -26,6 +26,14 @@ final reminderFilterProvider = StateProvider<ReminderFilter>((ref) {
   return ReminderFilter.today;
 });
 
+/// Application view state
+enum AppView { reminders, settings }
+
+/// Current application view
+final currentViewProvider = StateProvider<AppView>((ref) {
+  return AppView.reminders;
+});
+
 /// All reminders stream
 final allRemindersProvider = StreamProvider<List<ReminderModel>>((ref) {
   final repository = ref.watch(reminderRepositoryProvider);

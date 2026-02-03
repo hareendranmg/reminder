@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:window_manager/window_manager.dart';
@@ -8,6 +9,7 @@ import '../../providers/reminder_provider.dart';
 import '../../services/tray_service.dart';
 import '../../services/window_service.dart';
 import '../reminder/create_reminder_screen.dart';
+import '../settings/settings_screen.dart';
 import 'widgets/reminder_list.dart';
 import 'widgets/sidebar.dart';
 
@@ -72,45 +74,59 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     final colorScheme = theme.colorScheme;
     final isSidebarExpanded = ref.watch(sidebarExpandedProvider);
     final currentFilter = ref.watch(reminderFilterProvider);
+    final currentView = ref.watch(currentViewProvider);
 
-    return Scaffold(
-      backgroundColor: colorScheme.surface,
-      body: Row(
-        children: [
-          // Sidebar
-          AnimatedContainer(
-            duration: AppConstants.mediumAnimation,
-            curve: Curves.easeInOutCubic,
-            width: isSidebarExpanded
-                ? AppConstants.sidebarWidth
-                : AppConstants.sidebarCollapsedWidth,
-            clipBehavior: Clip.hardEdge,
-            decoration: const BoxDecoration(),
-            child: const Sidebar(),
-          ),
-
-          // Divider
-          VerticalDivider(
-            width: 1,
-            thickness: 1,
-            color: colorScheme.outlineVariant.withAlpha(77),
-          ),
-
-          // Main content area
-          Expanded(
-            child: Column(
-              children: [
-                // App bar
-                _buildAppBar(context, currentFilter),
-
-                // Reminder list
-                const Expanded(child: ReminderList()),
-              ],
+    return CallbackShortcuts(
+      bindings: {
+        const SingleActivator(LogicalKeyboardKey.keyN, control: true):
+            _showCreateReminderDialog,
+        const SingleActivator(LogicalKeyboardKey.keyF, control: true): () {
+          setState(() => _isSearchActive = true);
+        },
+      },
+      child: Scaffold(
+        backgroundColor: colorScheme.surface,
+        body: Row(
+          children: [
+            // Sidebar
+            AnimatedContainer(
+              duration: AppConstants.mediumAnimation,
+              curve: Curves.easeInOutCubic,
+              width: isSidebarExpanded
+                  ? AppConstants.sidebarWidth
+                  : AppConstants.sidebarCollapsedWidth,
+              clipBehavior: Clip.hardEdge,
+              decoration: const BoxDecoration(),
+              child: const Sidebar(),
             ),
-          ),
-        ],
+
+            // Divider
+            VerticalDivider(
+              width: 1,
+              thickness: 1,
+              color: colorScheme.outlineVariant.withAlpha(77),
+            ),
+
+            // Main content area
+            Expanded(
+              child: currentView == AppView.settings
+                  ? const SettingsScreen()
+                  : Column(
+                      children: [
+                        // App bar
+                        _buildAppBar(context, currentFilter),
+
+                        // Reminder list
+                        const Expanded(child: ReminderList()),
+                      ],
+                    ),
+            ),
+          ],
+        ),
+        floatingActionButton: currentView == AppView.reminders
+            ? _buildFAB(context)
+            : null,
       ),
-      floatingActionButton: _buildFAB(context),
     );
   }
 
