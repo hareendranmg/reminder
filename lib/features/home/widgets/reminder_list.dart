@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../data/models/reminder.dart';
 import '../../../providers/reminder_provider.dart';
+import '../../reminder/create_reminder_screen.dart';
 import 'reminder_card.dart';
 
 class ReminderList extends ConsumerWidget {
@@ -135,7 +136,20 @@ class ReminderList extends ConsumerWidget {
     ReminderModel reminder,
   ) {
     ref.read(selectedReminderProvider.notifier).state = reminder;
-    // TODO: Open edit dialog
+
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        backgroundColor: Colors.transparent,
+        child: Container(
+          constraints: const BoxConstraints(maxWidth: 500, maxHeight: 700),
+          child: CreateReminderScreen(
+            isDialog: true,
+            editingReminder: reminder,
+          ),
+        ),
+      ),
+    );
   }
 
   void _toggleReminder(WidgetRef ref, ReminderModel reminder, bool isActive) {
