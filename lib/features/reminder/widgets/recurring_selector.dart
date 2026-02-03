@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/constants/app_constants.dart';
 
-class RecurringSelector extends StatelessWidget {
+class RecurringSelector extends StatefulWidget {
   final RecurringType selectedType;
   final int interval;
   final ValueChanged<RecurringType> onTypeChanged;
@@ -15,6 +15,42 @@ class RecurringSelector extends StatelessWidget {
     required this.onTypeChanged,
     required this.onIntervalChanged,
   });
+
+  @override
+  State<RecurringSelector> createState() => _RecurringSelectorState();
+}
+
+class _RecurringSelectorState extends State<RecurringSelector> {
+  late TextEditingController _intervalController;
+
+  @override
+  void initState() {
+    super.initState();
+    _intervalController = TextEditingController(
+      text: widget.interval.toString(),
+    );
+  }
+
+  @override
+  void didUpdateWidget(RecurringSelector oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.interval != oldWidget.interval) {
+      final text = widget.interval.toString();
+      if (_intervalController.text != text) {
+        _intervalController.text = text;
+        // Keep cursor at end if focused to prevent jumping
+        _intervalController.selection = TextSelection.fromPosition(
+          TextPosition(offset: _intervalController.text.length),
+        );
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _intervalController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -39,8 +75,8 @@ class RecurringSelector extends StatelessWidget {
             // Interval input
             SizedBox(
               width: 100,
-              child: TextFormField(
-                initialValue: interval.toString(),
+              child: TextField(
+                controller: _intervalController,
                 keyboardType: TextInputType.number,
                 textAlign: TextAlign.center,
                 style: theme.textTheme.titleLarge?.copyWith(
@@ -71,7 +107,8 @@ class RecurringSelector extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       InkWell(
-                        onTap: () => onIntervalChanged(interval + 1),
+                        onTap: () =>
+                            widget.onIntervalChanged(widget.interval + 1),
                         child: Icon(
                           Icons.arrow_drop_up_rounded,
                           color: colorScheme.primary,
@@ -79,13 +116,13 @@ class RecurringSelector extends StatelessWidget {
                       ),
                       InkWell(
                         onTap: () {
-                          if (interval > 1) {
-                            onIntervalChanged(interval - 1);
+                          if (widget.interval > 1) {
+                            widget.onIntervalChanged(widget.interval - 1);
                           }
                         },
                         child: Icon(
                           Icons.arrow_drop_down_rounded,
-                          color: interval > 1
+                          color: widget.interval > 1
                               ? colorScheme.primary
                               : colorScheme.outline,
                         ),
@@ -96,7 +133,7 @@ class RecurringSelector extends StatelessWidget {
                 onChanged: (value) {
                   final parsed = int.tryParse(value);
                   if (parsed != null && parsed > 0) {
-                    onIntervalChanged(parsed);
+                    widget.onIntervalChanged(parsed);
                   }
                 },
               ),
@@ -114,7 +151,7 @@ class RecurringSelector extends StatelessWidget {
                 ),
                 child: DropdownButtonHideUnderline(
                   child: DropdownButton<RecurringType>(
-                    value: selectedType,
+                    value: widget.selectedType,
                     isExpanded: true,
                     icon: Icon(
                       Icons.keyboard_arrow_down_rounded,
@@ -125,7 +162,9 @@ class RecurringSelector extends StatelessWidget {
                       return DropdownMenuItem(
                         value: type,
                         child: Text(
-                          interval == 1 ? _getSingularLabel(type) : type.label,
+                          widget.interval == 1
+                              ? _getSingularLabel(type)
+                              : type.label,
                           style: theme.textTheme.bodyLarge?.copyWith(
                             fontWeight: FontWeight.w500,
                           ),
@@ -134,7 +173,7 @@ class RecurringSelector extends StatelessWidget {
                     }).toList(),
                     onChanged: (value) {
                       if (value != null) {
-                        onTypeChanged(value);
+                        widget.onTypeChanged(value);
                       }
                     },
                   ),
@@ -157,14 +196,14 @@ class RecurringSelector extends StatelessWidget {
         Wrap(
           spacing: 8,
           runSpacing: 8,
-          children: _getQuickSelectOptions(selectedType).map((option) {
-            final isSelected = option == interval;
+          children: _getQuickSelectOptions(widget.selectedType).map((option) {
+            final isSelected = option == widget.interval;
             return FilterChip(
               label: Text(
-                '$option ${interval == 1 ? _getSingularLabel(selectedType) : selectedType.label.toLowerCase()}',
+                '$option ${option == 1 ? _getSingularLabel(widget.selectedType) : widget.selectedType.label.toLowerCase()}',
               ),
               selected: isSelected,
-              onSelected: (_) => onIntervalChanged(option),
+              onSelected: (_) => widget.onIntervalChanged(option),
               backgroundColor: colorScheme.surfaceContainerHighest,
               selectedColor: colorScheme.primaryContainer,
               labelStyle: TextStyle(
@@ -232,13 +271,13 @@ class RecurringSelector extends StatelessWidget {
   }
 
   String _getSummaryText() {
-    final typeLabel = interval == 1
-        ? _getSingularLabel(selectedType).toLowerCase()
-        : selectedType.label.toLowerCase();
+    final typeLabel = widget.interval == 1
+        ? _getSingularLabel(widget.selectedType).toLowerCase()
+        : widget.selectedType.label.toLowerCase();
 
-    if (interval == 1) {
+    if (widget.interval == 1) {
       return 'This reminder will repeat every $typeLabel';
     }
-    return 'This reminder will repeat every $interval $typeLabel';
+    return 'This reminder will repeat every ${widget.interval} $typeLabel';
   }
 }

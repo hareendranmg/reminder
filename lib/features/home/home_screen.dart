@@ -84,48 +84,51 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
           setState(() => _isSearchActive = true);
         },
       },
-      child: Scaffold(
-        backgroundColor: colorScheme.surface,
-        body: Row(
-          children: [
-            // Sidebar
-            AnimatedContainer(
-              duration: AppConstants.mediumAnimation,
-              curve: Curves.easeInOutCubic,
-              width: isSidebarExpanded
-                  ? AppConstants.sidebarWidth
-                  : AppConstants.sidebarCollapsedWidth,
-              clipBehavior: Clip.hardEdge,
-              decoration: const BoxDecoration(),
-              child: const Sidebar(),
-            ),
+      child: Focus(
+        autofocus: true,
+        child: Scaffold(
+          backgroundColor: colorScheme.surface,
+          body: Row(
+            children: [
+              // Sidebar
+              AnimatedContainer(
+                duration: AppConstants.mediumAnimation,
+                curve: Curves.easeInOutCubic,
+                width: isSidebarExpanded
+                    ? AppConstants.sidebarWidth
+                    : AppConstants.sidebarCollapsedWidth,
+                clipBehavior: Clip.hardEdge,
+                decoration: const BoxDecoration(),
+                child: const Sidebar(),
+              ),
 
-            // Divider
-            VerticalDivider(
-              width: 1,
-              thickness: 1,
-              color: colorScheme.outlineVariant.withAlpha(77),
-            ),
+              // Divider
+              VerticalDivider(
+                width: 1,
+                thickness: 1,
+                color: colorScheme.outlineVariant.withAlpha(77),
+              ),
 
-            // Main content area
-            Expanded(
-              child: currentView == AppView.settings
-                  ? const SettingsScreen()
-                  : Column(
-                      children: [
-                        // App bar
-                        _buildAppBar(context, currentFilter),
+              // Main content area
+              Expanded(
+                child: currentView == AppView.settings
+                    ? const SettingsScreen()
+                    : Column(
+                        children: [
+                          // App bar
+                          _buildAppBar(context, currentFilter),
 
-                        // Reminder list
-                        const Expanded(child: ReminderList()),
-                      ],
-                    ),
-            ),
-          ],
+                          // Reminder list
+                          const Expanded(child: ReminderList()),
+                        ],
+                      ),
+              ),
+            ],
+          ),
+          floatingActionButton: currentView == AppView.reminders
+              ? _buildFAB(context)
+              : null,
         ),
-        floatingActionButton: currentView == AppView.reminders
-            ? _buildFAB(context)
-            : null,
       ),
     );
   }
