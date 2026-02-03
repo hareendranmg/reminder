@@ -23,7 +23,7 @@ final reminderRepositoryProvider = Provider<ReminderRepository>((ref) {
 
 /// Current filter state
 final reminderFilterProvider = StateProvider<ReminderFilter>((ref) {
-  return ReminderFilter.all;
+  return ReminderFilter.today;
 });
 
 /// All reminders stream
