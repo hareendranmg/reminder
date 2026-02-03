@@ -36,9 +36,9 @@ class ReminderList extends ConsumerWidget {
                         reminder: reminder,
                         onTap: () =>
                             _showReminderDetails(context, ref, reminder),
+
                         onToggle: (isActive) =>
                             _toggleReminder(ref, reminder, isActive),
-                        onDelete: () => _deleteReminder(context, ref, reminder),
                       )
                       .animate()
                       .fadeIn(
@@ -187,53 +187,5 @@ class ReminderList extends ConsumerWidget {
           .read(reminderActionsProvider.notifier)
           .toggleActive(reminder.id!, isActive);
     }
-  }
-
-  void _deleteReminder(
-    BuildContext context,
-    WidgetRef ref,
-    ReminderModel reminder,
-  ) {
-    if (reminder.id == null) return;
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Delete Reminder'),
-        content: Text('Are you sure you want to delete "${reminder.name}"?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () {
-              ref
-                  .read(reminderActionsProvider.notifier)
-                  .deleteReminder(reminder.id!);
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: const Text('Reminder deleted'),
-                  behavior: SnackBarBehavior.floating,
-                  action: SnackBarAction(
-                    label: 'Close',
-                    onPressed: () {
-                      // SnackBarAction automatically hides the snackbar.
-                      // We don't need to manually call hideCurrentSnackBar(),
-                      // and doing so with the original context is unsafe if the widget was removed.
-                    },
-                  ),
-                ),
-              );
-            },
-            style: FilledButton.styleFrom(
-              backgroundColor: Theme.of(context).colorScheme.error,
-            ),
-            child: const Text('Delete'),
-          ),
-        ],
-      ),
-    );
   }
 }

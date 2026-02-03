@@ -1,21 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
-import '../../../core/constants/app_constants.dart';
 import '../../../data/models/reminder.dart';
 
 class ReminderCard extends StatefulWidget {
   final ReminderModel reminder;
   final VoidCallback? onTap;
   final ValueChanged<bool>? onToggle;
-  final VoidCallback? onDelete;
 
   const ReminderCard({
     super.key,
     required this.reminder,
     this.onTap,
     this.onToggle,
-    this.onDelete,
   });
 
   @override
@@ -23,8 +20,6 @@ class ReminderCard extends StatefulWidget {
 }
 
 class _ReminderCardState extends State<ReminderCard> {
-  bool _isHovered = false;
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -34,180 +29,131 @@ class _ReminderCardState extends State<ReminderCard> {
     final isPast =
         !reminder.isRecurring && reminder.dateTime.isBefore(DateTime.now());
 
-    return MouseRegion(
-      onEnter: (_) => setState(() => _isHovered = true),
-      onExit: (_) => setState(() => _isHovered = false),
-      child: AnimatedScale(
-        duration: AppConstants.shortAnimation,
-        curve: Curves.easeInOut,
-        scale: _isHovered ? 1.01 : 1.0,
-        child: Card(
-          elevation: _isHovered ? 2 : 0,
-          color: reminder.isActive
-              ? colorScheme.surface
-              : colorScheme.surfaceContainerHighest.withAlpha(128),
-          child: InkWell(
-            onTap: widget.onTap,
-            borderRadius: BorderRadius.circular(16),
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Status indicator
-                  _buildStatusIndicator(context, isPast),
-                  const SizedBox(width: 16),
+    return Card(
+      elevation: 0,
+      color: reminder.isActive
+          ? colorScheme.surface
+          : colorScheme.surfaceContainerHighest.withAlpha(128),
+      child: InkWell(
+        onTap: widget.onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Status indicator
+              _buildStatusIndicator(context, isPast),
+              const SizedBox(width: 16),
 
-                  // Content
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+              // Content
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Title row
+                    Row(
                       children: [
-                        // Title row
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                reminder.name,
-                                style: theme.textTheme.titleMedium?.copyWith(
-                                  fontWeight: FontWeight.w600,
-                                  color: reminder.isActive
-                                      ? colorScheme.onSurface
-                                      : colorScheme.onSurface.withAlpha(128),
-                                  decoration: reminder.isActive
-                                      ? null
-                                      : TextDecoration.lineThrough,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
+                        Expanded(
+                          child: Text(
+                            reminder.name,
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.w600,
+                              color: reminder.isActive
+                                  ? colorScheme.onSurface
+                                  : colorScheme.onSurface.withAlpha(128),
+                              decoration: reminder.isActive
+                                  ? null
+                                  : TextDecoration.lineThrough,
                             ),
-                            if (reminder.isRecurring)
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                  vertical: 4,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: colorScheme.tertiaryContainer,
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(
-                                      Icons.repeat_rounded,
-                                      size: 14,
-                                      color: colorScheme.onTertiaryContainer,
-                                    ),
-                                    const SizedBox(width: 4),
-                                    Text(
-                                      _getRecurringText(reminder),
-                                      style: theme.textTheme.labelSmall
-                                          ?.copyWith(
-                                            color:
-                                                colorScheme.onTertiaryContainer,
-                                            fontWeight: FontWeight.w600,
-                                          ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                          ],
-                        ),
-
-                        // Description
-                        if (reminder.description != null &&
-                            reminder.description!.isNotEmpty) ...[
-                          const SizedBox(height: 4),
-                          Text(
-                            reminder.description!,
-                            style: theme.textTheme.bodyMedium?.copyWith(
-                              color: colorScheme.onSurfaceVariant,
-                            ),
-                            maxLines: 2,
+                            maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
-                        ],
-
-                        const SizedBox(height: 12),
-
-                        // Date/time row
-                        Row(
-                          children: [
-                            Icon(
-                              Icons.schedule_rounded,
-                              size: 16,
-                              color: isPast
-                                  ? colorScheme.error
-                                  : colorScheme.primary,
-                            ),
-                            const SizedBox(width: 6),
-                            Text(
-                              _formatDateTime(reminder),
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                color: isPast
-                                    ? colorScheme.error
-                                    : colorScheme.primary,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                            const Spacer(),
-
-                            // Time remaining
-                            if (!isPast && reminder.isActive)
-                              _buildTimeRemaining(context, reminder),
-                          ],
                         ),
+                        if (reminder.isRecurring)
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: colorScheme.tertiaryContainer,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.repeat_rounded,
+                                  size: 14,
+                                  color: colorScheme.onTertiaryContainer,
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  _getRecurringText(reminder),
+                                  style: theme.textTheme.labelSmall?.copyWith(
+                                    color: colorScheme.onTertiaryContainer,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
                       ],
                     ),
-                  ),
 
-                  const SizedBox(width: 12),
-
-                  // Actions
-                  Column(
-                    children: [
-                      // Toggle switch
-                      Switch(
-                        value: reminder.isActive,
-                        onChanged: widget.onToggle,
-                      ),
-
-                      // Edit button (shown on hover)
-                      AnimatedOpacity(
-                        opacity: _isHovered ? 1.0 : 0.0,
-                        duration: AppConstants.shortAnimation,
-                        child: IconButton(
-                          onPressed: widget.onTap,
-                          icon: Icon(
-                            Icons.edit_rounded,
-                            color: colorScheme.primary,
-                            size: 20,
-                          ),
-                          tooltip: 'Edit',
+                    // Description
+                    if (reminder.description != null &&
+                        reminder.description!.isNotEmpty) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        reminder.description!,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: colorScheme.onSurfaceVariant,
                         ),
-                      ),
-
-                      // Delete button (shown on hover)
-                      AnimatedOpacity(
-                        opacity: _isHovered ? 1.0 : 0.0,
-                        duration: AppConstants.shortAnimation,
-                        child: IconButton(
-                          onPressed: widget.onDelete,
-                          icon: Icon(
-                            Icons.delete_outline_rounded,
-                            color: colorScheme.error,
-                            size: 20,
-                          ),
-                          tooltip: 'Delete',
-                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ],
-                  ),
-                ],
+
+                    const SizedBox(height: 12),
+
+                    // Date/time row
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.schedule_rounded,
+                          size: 16,
+                          color: isPast
+                              ? colorScheme.error
+                              : colorScheme.primary,
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          _formatDateTime(reminder),
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: isPast
+                                ? colorScheme.error
+                                : colorScheme.primary,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        const Spacer(),
+
+                        // Time remaining
+                        if (!isPast && reminder.isActive)
+                          _buildTimeRemaining(context, reminder),
+                      ],
+                    ),
+                  ],
+                ),
               ),
-            ),
+
+              const SizedBox(width: 12),
+
+              // Actions
+              Switch(value: reminder.isActive, onChanged: widget.onToggle),
+            ],
           ),
         ),
       ),

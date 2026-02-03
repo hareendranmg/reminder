@@ -135,6 +135,65 @@ class _CreateReminderScreenState extends ConsumerState<CreateReminderScreen> {
     }
   }
 
+  Future<void> _deleteReminder() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Reminder?'),
+        content: const Text(
+          'This action cannot be undone. Are you sure you want to delete this reminder?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.error,
+              foregroundColor: Theme.of(context).colorScheme.onError,
+            ),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true && mounted) {
+      setState(() => _isLoading = true);
+      try {
+        await ref
+            .read(reminderActionsProvider.notifier)
+            .deleteReminder(widget.editingReminder!.id!);
+
+        if (mounted) {
+          Navigator.pop(context);
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Reminder deleted'),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error: $e'),
+              backgroundColor: Theme.of(context).colorScheme.error,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      } finally {
+        if (mounted) {
+          setState(() => _isLoading = false);
+        }
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -177,6 +236,17 @@ class _CreateReminderScreenState extends ConsumerState<CreateReminderScreen> {
                   ),
                 ),
                 const Spacer(),
+                if (widget.editingReminder != null) ...[
+                  IconButton(
+                    onPressed: _isLoading ? null : _deleteReminder,
+                    icon: Icon(
+                      Icons.delete_outline_rounded,
+                      color: colorScheme.error,
+                    ),
+                    tooltip: 'Delete Reminder',
+                  ),
+                  const SizedBox(width: 8),
+                ],
                 IconButton(
                   onPressed: () => Navigator.pop(context),
                   icon: const Icon(Icons.close_rounded),
