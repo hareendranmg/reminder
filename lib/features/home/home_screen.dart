@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:window_manager/window_manager.dart';
 
 import '../../core/constants/app_constants.dart';
 import '../../providers/reminder_provider.dart';
+import '../../services/tray_service.dart';
+import '../../services/window_service.dart';
 import '../reminder/create_reminder_screen.dart';
 import 'widgets/reminder_list.dart';
 import 'widgets/sidebar.dart';
@@ -16,7 +19,7 @@ class HomeScreen extends ConsumerStatefulWidget {
 }
 
 class _HomeScreenState extends ConsumerState<HomeScreen>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, WindowListener {
   late AnimationController _fabController;
   final TextEditingController _searchController = TextEditingController();
   bool _isSearchActive = false;
@@ -24,6 +27,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   @override
   void initState() {
     super.initState();
+    windowManager.addListener(this);
+    // Initialize system tray
+    trayService.init();
+    // Prevent default close to handle minimize-to-tray
+    windowManager.setPreventClose(true);
+
     _fabController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 300),
@@ -32,9 +41,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 
   @override
   void dispose() {
+    windowManager.removeListener(this);
     _fabController.dispose();
     _searchController.dispose();
     super.dispose();
+  }
+
+  @override
+  void onWindowClose() async {
+    // Minimize to tray instead of closing
+    await WindowService.minimizeToTray();
   }
 
   void _showCreateReminderDialog() {

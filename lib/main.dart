@@ -48,7 +48,11 @@ Future<void> main(List<String> args) async {
         await windowManager.center();
         await windowManager.setTitle('Reminder: ${reminder.name}');
 
-        runApp(AlertWindowApp(reminder: reminder, windowId: windowId));
+        runApp(
+          ProviderScope(
+            child: AlertWindowApp(reminder: reminder, windowId: windowId),
+          ),
+        );
         return;
       }
     } catch (e) {

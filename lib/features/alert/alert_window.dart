@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:window_manager/window_manager.dart';
 
 import '../../core/theme/app_theme.dart';
 import '../../data/models/reminder.dart';
+import '../../providers/reminder_provider.dart';
 import '../../services/window_service.dart';
 
 class AlertWindowApp extends StatelessWidget {
@@ -44,7 +46,7 @@ class AlertWindowScreen extends StatefulWidget {
   State<AlertWindowScreen> createState() => _AlertWindowScreenState();
 }
 
-class _AlertWindowScreenState extends State<AlertWindowScreen>
+class _AlertWindowScreenState extends ConsumerState<AlertWindowScreen>
     with WindowListener, SingleTickerProviderStateMixin {
   late AnimationController _pulseController;
   bool _canDismiss = false;
@@ -81,6 +83,22 @@ class _AlertWindowScreenState extends State<AlertWindowScreen>
 
   void _dismissReminder() async {
     if (!_canDismiss) return;
+    await WindowService.closeAlertWindow(widget.windowId);
+  }
+
+  void _snoozeReminder() async {
+    if (!_canDismiss) return;
+
+    // Calculate new time (10 minutes from now)
+    final snoozeTime = DateTime.now().add(const Duration(minutes: 10));
+
+    // Update reminder in database
+    final updatedReminder = widget.reminder.copyWith(scheduledAt: snoozeTime);
+
+    // We can use the global container here because we wrapped the app in ProviderScope
+    await ref.read(reminderRepositoryProvider).updateReminder(updatedReminder);
+
+    // Close the window
     await WindowService.closeAlertWindow(widget.windowId);
   }
 
@@ -296,31 +314,63 @@ class _AlertWindowScreenState extends State<AlertWindowScreen>
   }
 
   Widget _buildDismissButton(BuildContext context) {
-    return SizedBox(
-      width: double.infinity,
-      height: 56,
-      child: FilledButton(
-        onPressed: _canDismiss ? _dismissReminder : null,
-        style: FilledButton.styleFrom(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
+    return Row(
+      children: [
+        // Snooze button
+        Expanded(
+          child: SizedBox(
+            height: 56,
+            child: OutlinedButton(
+              onPressed: _canDismiss ? _snoozeReminder : null,
+              style: OutlinedButton.styleFrom(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                side: BorderSide(color: Theme.of(context).colorScheme.outline),
+              ),
+              child: const Text(
+                'Snooze',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+              ),
+            ),
           ),
         ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              _canDismiss ? Icons.check_rounded : Icons.hourglass_top_rounded,
-              size: 24,
+        const SizedBox(width: 16),
+        // Dismiss button
+        Expanded(
+          flex: 2,
+          child: SizedBox(
+            height: 56,
+            child: FilledButton(
+              onPressed: _canDismiss ? _dismissReminder : null,
+              style: FilledButton.styleFrom(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    _canDismiss
+                        ? Icons.check_rounded
+                        : Icons.hourglass_top_rounded,
+                    size: 24,
+                  ),
+                  const SizedBox(width: 12),
+                  Text(
+                    _canDismiss ? 'Access' : 'Wait...',
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
             ),
-            const SizedBox(width: 12),
-            Text(
-              _canDismiss ? 'Acknowledge' : 'Please wait...',
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-            ),
-          ],
+          ),
         ),
-      ),
+      ],
     );
   }
 }
