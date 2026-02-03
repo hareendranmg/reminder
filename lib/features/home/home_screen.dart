@@ -18,6 +18,8 @@ class HomeScreen extends ConsumerStatefulWidget {
 class _HomeScreenState extends ConsumerState<HomeScreen>
     with SingleTickerProviderStateMixin {
   late AnimationController _fabController;
+  final TextEditingController _searchController = TextEditingController();
+  bool _isSearchActive = false;
 
   @override
   void initState() {
@@ -31,6 +33,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   @override
   void dispose() {
     _fabController.dispose();
+    _searchController.dispose();
     super.dispose();
   }
 
@@ -110,42 +113,62 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       ),
       child: Row(
         children: [
-          Text(
-            filter.label,
-            style: theme.textTheme.headlineSmall?.copyWith(
-              fontWeight: FontWeight.w600,
-              color: colorScheme.onSurface,
-            ),
-          ).animate().fadeIn(duration: 200.ms).slideX(begin: -0.1, end: 0),
+          if (_isSearchActive)
+            Expanded(
+              child: TextField(
+                controller: _searchController,
+                autofocus: true,
+                decoration: InputDecoration(
+                  hintText: 'Search reminders...',
+                  border: InputBorder.none,
+                  filled: false,
+                  hintStyle: theme.textTheme.bodyLarge?.copyWith(
+                    color: colorScheme.onSurfaceVariant.withAlpha(128),
+                  ),
+                ),
+                style: theme.textTheme.bodyLarge?.copyWith(
+                  color: colorScheme.onSurface,
+                ),
+                onChanged: (value) {
+                  ref.read(searchQueryProvider.notifier).state = value;
+                },
+              ).animate().fadeIn(duration: 200.ms),
+            )
+          else
+            Text(
+              filter.label,
+              style: theme.textTheme.headlineSmall?.copyWith(
+                fontWeight: FontWeight.w600,
+                color: colorScheme.onSurface,
+              ),
+            ).animate().fadeIn(duration: 200.ms).slideX(begin: -0.1, end: 0),
+
           const Spacer(),
-          // Search button
-          IconButton(
-            onPressed: () {
-              // TODO: Implement search
-            },
-            icon: Icon(
-              Icons.search_rounded,
-              color: colorScheme.onSurfaceVariant,
+
+          if (_isSearchActive)
+            IconButton(
+              onPressed: () {
+                setState(() => _isSearchActive = false);
+                _searchController.clear();
+                ref.read(searchQueryProvider.notifier).state = '';
+              },
+              icon: Icon(
+                Icons.close_rounded,
+                color: colorScheme.onSurfaceVariant,
+              ),
+              tooltip: 'Close search',
+            )
+          else
+            IconButton(
+              onPressed: () {
+                setState(() => _isSearchActive = true);
+              },
+              icon: Icon(
+                Icons.search_rounded,
+                color: colorScheme.onSurfaceVariant,
+              ),
+              tooltip: 'Search reminders',
             ),
-            tooltip: 'Search reminders',
-          ),
-          const SizedBox(width: 8),
-          // Settings button
-          IconButton(
-            onPressed: () {
-              // Toggle theme
-              ref.read(themeModeProvider.notifier).state = !ref.read(
-                themeModeProvider,
-              );
-            },
-            icon: Icon(
-              ref.watch(themeModeProvider)
-                  ? Icons.light_mode_rounded
-                  : Icons.dark_mode_rounded,
-              color: colorScheme.onSurfaceVariant,
-            ),
-            tooltip: 'Toggle theme',
-          ),
         ],
       ),
     );

@@ -42,7 +42,18 @@ final activeRemindersProvider = StreamProvider<List<ReminderModel>>((ref) {
 final filteredRemindersProvider = StreamProvider<List<ReminderModel>>((ref) {
   final repository = ref.watch(reminderRepositoryProvider);
   final filter = ref.watch(reminderFilterProvider);
-  return repository.watchRemindersByFilter(filter);
+  final searchQuery = ref.watch(searchQueryProvider).toLowerCase();
+
+  return repository.watchRemindersByFilter(filter).map((reminders) {
+    if (searchQuery.isEmpty) return reminders;
+
+    return reminders.where((reminder) {
+      final nameMatch = reminder.name.toLowerCase().contains(searchQuery);
+      final descMatch =
+          reminder.description?.toLowerCase().contains(searchQuery) ?? false;
+      return nameMatch || descMatch;
+    }).toList();
+  });
 });
 
 /// Today's reminders count
@@ -67,9 +78,9 @@ final sidebarExpandedProvider = StateProvider<bool>((ref) {
   return true;
 });
 
-/// Theme mode provider
-final themeModeProvider = StateProvider<bool>((ref) {
-  return false; // false = light, true = dark
+/// Search query provider
+final searchQueryProvider = StateProvider<String>((ref) {
+  return '';
 });
 
 /// Reminder actions notifier
