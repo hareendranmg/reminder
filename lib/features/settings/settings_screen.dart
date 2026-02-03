@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:reminder/features/settings/providers/startup_provider.dart';
 
 import 'preferences_provider.dart';
 
@@ -157,6 +158,44 @@ class SettingsScreen extends ConsumerWidget {
                           value: false, // TODO: Implement sound provider
                           onChanged: (value) {
                             // TODO: Implement
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 32),
+
+                  // System Section
+                  Text(
+                    'System',
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      color: colorScheme.primary,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Card(
+                    elevation: 0,
+                    color: colorScheme.surfaceContainerHighest.withAlpha(77),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Column(
+                      children: [
+                        Consumer(
+                          builder: (context, ref, child) {
+                            final isEnabled = ref.watch(startupProvider);
+                            return SwitchListTile(
+                              title: const Text('Launch at login'),
+                              subtitle: const Text(
+                                'Automatically start the app when you log in',
+                              ),
+                              value: isEnabled,
+                              onChanged: (value) {
+                                ref.read(startupProvider.notifier).toggle();
+                              },
+                            );
                           },
                         ),
                       ],
