@@ -1,53 +1,77 @@
 import 'dart:io';
 
-import 'package:system_tray/system_tray.dart';
+import 'package:tray_manager/tray_manager.dart';
 import 'package:window_manager/window_manager.dart';
 
-import '../core/constants/app_constants.dart';
+import 'window_service.dart';
 
-class TrayService {
-  final SystemTray _systemTray = SystemTray();
-  final Menu _menu = Menu();
+class TrayService with TrayListener {
+  static final TrayService _instance = TrayService._internal();
+
+  factory TrayService() {
+    return _instance;
+  }
+
+  TrayService._internal();
 
   Future<void> init() async {
-    String iconPath = Platform.isWindows
-        ? 'assets/icons/app_icon.ico'
-        : 'assets/icons/app_icon.png';
-
-    await _systemTray.initSystemTray(
-      title: AppConstants.appName,
-      iconPath: iconPath,
+    await trayManager.setIcon(
+      Platform.isWindows
+          ? 'assets/icons/app_icon.ico'
+          : 'assets/icons/app_icon.png',
     );
+    await _updateContextMenu();
+    trayManager.addListener(this);
+  }
 
-    await _menu.buildFrom([
-      MenuItemLabel(
-        label: 'Show',
-        onClicked: (menuItem) async {
-          await windowManager.show();
-          await windowManager.focus();
-        },
+  Future<void> _updateContextMenu({String? nextReminderText}) async {
+    List<MenuItem> items = [
+      MenuItem(
+        key: 'next_reminder',
+        label: nextReminderText ?? 'Next: None',
+        disabled: true,
       ),
-      MenuItemLabel(
-        label: 'Exit',
-        onClicked: (menuItem) async {
-          // Allow the window to close
-          await windowManager.setPreventClose(false);
-          await windowManager.close();
-        },
-      ),
-    ]);
+      MenuItem.separator(),
+      MenuItem(key: 'add_reminder', label: 'Add Reminder'),
+      MenuItem(key: 'show_window', label: 'Show Window'),
+      MenuItem.separator(),
+      MenuItem(key: 'exit_app', label: 'Exit'),
+    ];
+    await trayManager.setContextMenu(Menu(items: items));
+  }
 
-    await _systemTray.setContextMenu(_menu);
+  Future<void> updateNextReminder(String text) async {
+    await _updateContextMenu(nextReminderText: text);
+  }
 
-    // Handle left click on tray icon (restore app)
-    _systemTray.registerSystemTrayEventHandler((eventName) {
-      if (eventName == kSystemTrayEventClick) {
-        windowManager.show();
-        windowManager.focus();
-      } else if (eventName == kSystemTrayEventRightClick) {
-        _systemTray.popUpContextMenu();
-      }
-    });
+  @override
+  void onTrayIconMouseDown() {
+    WindowService.restoreFromTray();
+  }
+
+  @override
+  void onTrayIconRightMouseDown() {
+    trayManager.popUpContextMenu();
+  }
+
+  @override
+  void onTrayMenuItemClick(MenuItem menuItem) async {
+    switch (menuItem.key) {
+      case 'add_reminder':
+        await WindowService.restoreFromTray();
+        // TODO: Navigate to add reminder screen if possible
+        break;
+      case 'show_window':
+        await WindowService.restoreFromTray();
+        break;
+      case 'exit_app':
+        await windowManager.destroy();
+        exit(0);
+    }
+  }
+
+  void dispose() {
+    trayManager.removeListener(this);
   }
 }
 

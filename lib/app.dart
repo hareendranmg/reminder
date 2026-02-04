@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:reminder/features/tray/tray_listener.dart';
 
 import 'core/theme/app_theme.dart';
 import 'features/home/home_screen.dart';
@@ -27,13 +28,15 @@ class _ReminderAppState extends ConsumerState<ReminderApp> {
   Widget build(BuildContext context) {
     final themeMode = ref.watch(themeModeProvider);
 
-    return MaterialApp(
-      title: 'Reminder',
-      debugShowCheckedModeBanner: false,
-      theme: AppTheme.lightTheme,
-      darkTheme: AppTheme.darkTheme,
-      themeMode: themeMode,
-      home: const HomeScreen(),
+    return TrayListener(
+      child: MaterialApp(
+        title: 'Reminder',
+        debugShowCheckedModeBanner: false,
+        theme: AppTheme.lightTheme,
+        darkTheme: AppTheme.darkTheme,
+        themeMode: themeMode,
+        home: const HomeScreen(),
+      ),
     );
   }
 }

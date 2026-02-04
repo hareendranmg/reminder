@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -5,6 +7,7 @@ import 'package:intl/intl.dart';
 import 'package:window_manager/window_manager.dart';
 
 import '../../core/theme/app_theme.dart';
+import '../../data/constants/quotes.dart';
 import '../../data/models/reminder.dart';
 import '../../providers/reminder_provider.dart';
 import '../../services/window_service.dart';
@@ -49,11 +52,13 @@ class AlertWindowScreen extends ConsumerStatefulWidget {
 class _AlertWindowScreenState extends ConsumerState<AlertWindowScreen>
     with WindowListener, SingleTickerProviderStateMixin {
   late AnimationController _pulseController;
+  late Map<String, String> _quote;
   bool _canDismiss = false;
 
   @override
   void initState() {
     super.initState();
+    _quote = motivationalQuotes[Random().nextInt(motivationalQuotes.length)];
     windowManager.addListener(this);
 
     _pulseController = AnimationController(
@@ -138,7 +143,6 @@ class _AlertWindowScreenState extends ConsumerState<AlertWindowScreen>
                     .scale(begin: const Offset(0.5, 0.5)),
 
                 const SizedBox(height: 24),
-
                 // Reminder title
                 Text(
                       widget.reminder.name,
@@ -178,6 +182,13 @@ class _AlertWindowScreenState extends ConsumerState<AlertWindowScreen>
                 _buildTimeInfo(
                   context,
                 ).animate().fadeIn(delay: 300.ms, duration: 300.ms),
+
+                const SizedBox(height: 24),
+
+                // Motivational Quote
+                _buildQuote(
+                  context,
+                ).animate().fadeIn(duration: 600.ms).slideY(begin: -0.2),
 
                 const SizedBox(height: 24),
 
@@ -319,6 +330,35 @@ class _AlertWindowScreenState extends ConsumerState<AlertWindowScreen>
     );
   }
 
+  Widget _buildQuote(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: colorScheme.surfaceContainerHighest.withAlpha(77),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: colorScheme.outlineVariant.withAlpha(77)),
+      ),
+      child: Column(
+        children: [
+          Text(
+            '"${_quote['quote']}"',
+            style: theme.textTheme.headlineSmall,
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 4),
+          Text(
+            '- ${_quote['author']}',
+            style: theme.textTheme.bodyMedium,
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildDismissButton(BuildContext context) {
     return Row(
       children: [
@@ -365,7 +405,7 @@ class _AlertWindowScreenState extends ConsumerState<AlertWindowScreen>
                   ),
                   const SizedBox(width: 12),
                   Text(
-                    _canDismiss ? 'Access' : 'Wait...',
+                    _canDismiss ? 'Acknowledge' : 'Wait...',
                     style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,

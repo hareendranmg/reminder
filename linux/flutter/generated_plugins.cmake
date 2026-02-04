@@ -6,7 +6,7 @@ list(APPEND FLUTTER_PLUGIN_LIST
   desktop_multi_window
   screen_retriever_linux
   sqlite3_flutter_libs
-  system_tray
+  tray_manager
   window_manager
 )
 

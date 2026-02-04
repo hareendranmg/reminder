@@ -12,6 +12,7 @@ import 'core/constants/app_constants.dart';
 import 'data/models/reminder.dart';
 import 'features/alert/alert_window.dart';
 import 'features/settings/preferences_provider.dart';
+import 'services/tray_service.dart';
 import 'services/window_service.dart';
 
 Future<void> main(List<String> args) async {
@@ -70,6 +71,7 @@ Future<void> main(List<String> args) async {
   // Main window initialization - only reaches here if no valid sub-window args
   await WindowService.initializeMainWindow();
   await startupService.init();
+  await trayService.init();
 
   runApp(
     ProviderScope(
