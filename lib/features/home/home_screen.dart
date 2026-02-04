@@ -34,7 +34,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     super.initState();
     windowManager.addListener(this);
     // Initialize system tray
-    trayService.init();
+    // trayService.init() moved to main.dart
+    trayService.onAddReminderRequest = _showCreateReminderDialog;
     // Prevent default close to handle minimize-to-tray
     windowManager.setPreventClose(true);
 
@@ -46,6 +47,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 
   @override
   void dispose() {
+    trayService.onAddReminderRequest = null;
     windowManager.removeListener(this);
     _fabController.dispose();
     _searchController.dispose();
@@ -66,7 +68,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       builder: (context) => Dialog(
         backgroundColor: Colors.transparent,
         child: Container(
-          constraints: const BoxConstraints(maxWidth: 500, maxHeight: 700),
+          constraints: const BoxConstraints(maxWidth: 700, maxHeight: 700),
           child: const CreateReminderScreen(isDialog: true),
         ),
       ),

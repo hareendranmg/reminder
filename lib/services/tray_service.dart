@@ -14,7 +14,12 @@ class TrayService with TrayListener {
 
   TrayService._internal();
 
+  bool _isInitialized = false;
+
   Future<void> init() async {
+    if (_isInitialized) return;
+    _isInitialized = true;
+
     await trayManager.setIcon(
       Platform.isWindows
           ? 'assets/icons/app_icon.ico'
@@ -54,12 +59,14 @@ class TrayService with TrayListener {
     trayManager.popUpContextMenu();
   }
 
+  void Function()? onAddReminderRequest;
+
   @override
   void onTrayMenuItemClick(MenuItem menuItem) async {
     switch (menuItem.key) {
       case 'add_reminder':
         await WindowService.restoreFromTray();
-        // TODO: Navigate to add reminder screen if possible
+        onAddReminderRequest?.call();
         break;
       case 'show_window':
         await WindowService.restoreFromTray();
