@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:reminder/features/settings/providers/startup_provider.dart';
 
 import 'preferences_provider.dart';
+import 'providers/sound_provider.dart';
+import 'providers/startup_provider.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -70,7 +71,9 @@ class SettingsScreen extends ConsumerWidget {
                         RadioListTile<ThemeMode>(
                           title: const Text('System Default'),
                           value: ThemeMode.system,
+                          // ignore: deprecated_member_use
                           groupValue: themeMode,
+                          // ignore: deprecated_member_use
                           onChanged: (value) {
                             if (value != null) {
                               ref
@@ -82,7 +85,9 @@ class SettingsScreen extends ConsumerWidget {
                         RadioListTile<ThemeMode>(
                           title: const Text('Light Mode'),
                           value: ThemeMode.light,
+                          // ignore: deprecated_member_use
                           groupValue: themeMode,
+                          // ignore: deprecated_member_use
                           onChanged: (value) {
                             if (value != null) {
                               ref
@@ -94,7 +99,9 @@ class SettingsScreen extends ConsumerWidget {
                         RadioListTile<ThemeMode>(
                           title: const Text('Dark Mode'),
                           value: ThemeMode.dark,
+                          // ignore: deprecated_member_use
                           groupValue: themeMode,
+                          // ignore: deprecated_member_use
                           onChanged: (value) {
                             if (value != null) {
                               ref
@@ -150,14 +157,23 @@ class SettingsScreen extends ConsumerWidget {
                         ),
                         const Divider(height: 1),
                         // Placeholder for Sound
-                        SwitchListTile(
-                          title: const Text('Play Sound'),
-                          subtitle: const Text(
-                            'Play a sound when reminder triggers',
-                          ),
-                          value: false, // TODO: Implement sound provider
-                          onChanged: (value) {
-                            // TODO: Implement
+                        Consumer(
+                          builder: (context, ref, child) {
+                            final isSoundEnabled = ref.watch(
+                              soundEnabledProvider,
+                            );
+                            return SwitchListTile(
+                              title: const Text('Play Sound'),
+                              subtitle: const Text(
+                                'Play a sound when reminder triggers',
+                              ),
+                              value: isSoundEnabled,
+                              onChanged: (value) {
+                                ref
+                                    .read(soundEnabledProvider.notifier)
+                                    .setSoundEnabled(value);
+                              },
+                            );
                           },
                         ),
                       ],
