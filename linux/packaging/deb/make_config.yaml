@@ -5,6 +5,7 @@ maintainer:
   email: hareendranmg@gmail.com
 priority: optional
 section: x11
+installed_size: 1024
 essential: false
 icon: assets/icons/app_icon.png
 
