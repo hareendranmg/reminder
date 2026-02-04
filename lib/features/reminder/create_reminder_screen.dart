@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
 
 import '../../core/constants/app_constants.dart';
 import '../../data/models/reminder.dart';
 import '../../providers/reminder_provider.dart';
-import 'widgets/datetime_picker.dart';
 import 'widgets/recurring_selector.dart';
+import 'widgets/reminder_date_time_section.dart';
+import 'widgets/reminder_recurring_toggle.dart';
+import 'widgets/reminder_section_title.dart';
 
 class CreateReminderScreen extends ConsumerStatefulWidget {
   final ReminderModel? editingReminder;
@@ -265,7 +266,7 @@ class _CreateReminderScreenState extends ConsumerState<CreateReminderScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // Name field
-                    _buildSectionTitle(context, 'Reminder Name'),
+                    ReminderSectionTitle(title: 'Reminder Name'),
                     const SizedBox(height: 8),
                     TextFormField(
                       controller: _nameController,
@@ -303,7 +304,7 @@ class _CreateReminderScreenState extends ConsumerState<CreateReminderScreen> {
                     const SizedBox(height: 24),
 
                     // Description field
-                    _buildSectionTitle(context, 'Description (Optional)'),
+                    ReminderSectionTitle(title: 'Description (Optional)'),
                     const SizedBox(height: 8),
                     TextFormField(
                       controller: _descriptionController,
@@ -337,12 +338,23 @@ class _CreateReminderScreenState extends ConsumerState<CreateReminderScreen> {
                     const SizedBox(height: 24),
 
                     // Recurring toggle
-                    _buildRecurringToggle(context),
+                    ReminderRecurringToggle(
+                      isRecurring: _isRecurring,
+                      onToggle: (value) => setState(() => _isRecurring = value),
+                    ),
 
                     const SizedBox(height: 24),
 
                     // Date and Time
-                    _buildDateTimeSection(context),
+                    ReminderDateTimeSection(
+                      isRecurring: _isRecurring,
+                      selectedDate: _selectedDate,
+                      selectedTime: _selectedTime,
+                      onDateChanged: (date) =>
+                          setState(() => _selectedDate = date),
+                      onTimeChanged: (time) =>
+                          setState(() => _selectedTime = time),
+                    ),
 
                     // Recurring options
                     if (_isRecurring) ...[
@@ -423,134 +435,5 @@ class _CreateReminderScreenState extends ConsumerState<CreateReminderScreen> {
       maxChildSize: 0.95,
       builder: (context, scrollController) => content,
     );
-  }
-
-  Widget _buildSectionTitle(BuildContext context, String title) {
-    return Text(
-      title,
-      style: Theme.of(context).textTheme.labelLarge?.copyWith(
-        fontWeight: FontWeight.w600,
-        color: Theme.of(context).colorScheme.onSurfaceVariant,
-      ),
-    );
-  }
-
-  Widget _buildRecurringToggle(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerHighest.withAlpha(77),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: _isRecurring
-              ? colorScheme.primary.withAlpha(128)
-              : Colors.transparent,
-          width: 2,
-        ),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: _isRecurring
-                  ? colorScheme.primaryContainer
-                  : colorScheme.surfaceContainerHighest,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(
-              _isRecurring ? Icons.repeat_rounded : Icons.looks_one_rounded,
-              color: _isRecurring
-                  ? colorScheme.onPrimaryContainer
-                  : colorScheme.onSurfaceVariant,
-            ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  _isRecurring ? 'Recurring' : 'One-time',
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                Text(
-                  _isRecurring
-                      ? 'Repeats at a regular interval'
-                      : 'Triggers once at the scheduled time',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: colorScheme.onSurfaceVariant,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Switch(
-            value: _isRecurring,
-            onChanged: (value) {
-              setState(() => _isRecurring = value);
-            },
-          ),
-        ],
-      ),
-    ).animate().fadeIn(delay: 200.ms, duration: 200.ms);
-  }
-
-  Widget _buildDateTimeSection(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildSectionTitle(
-          context,
-          _isRecurring ? 'Start Date & Time' : 'Date & Time',
-        ),
-        const SizedBox(height: 8),
-        Row(
-          children: [
-            // Date picker
-            Expanded(
-              child: DateTimePicker(
-                icon: Icons.calendar_today_rounded,
-                label: DateFormat('EEE, MMM d, yyyy').format(_selectedDate),
-                onTap: () async {
-                  final date = await showDatePicker(
-                    context: context,
-                    initialDate: _selectedDate,
-                    firstDate: DateTime.now(),
-                    lastDate: DateTime.now().add(const Duration(days: 365 * 5)),
-                  );
-                  if (date != null) {
-                    setState(() => _selectedDate = date);
-                  }
-                },
-              ),
-            ),
-            const SizedBox(width: 12),
-            // Time picker
-            Expanded(
-              child: DateTimePicker(
-                icon: Icons.access_time_rounded,
-                label: _selectedTime.format(context),
-                onTap: () async {
-                  final time = await showTimePicker(
-                    context: context,
-                    initialTime: _selectedTime,
-                  );
-                  if (time != null) {
-                    setState(() => _selectedTime = time);
-                  }
-                },
-              ),
-            ),
-          ],
-        ),
-      ],
-    ).animate().fadeIn(delay: 250.ms, duration: 200.ms);
   }
 }

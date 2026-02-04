@@ -50,10 +50,21 @@ class TrayListener extends ConsumerWidget {
           time.month == now.month &&
           time.year == now.year) {
         timeString = DateFormat('h:mm a').format(time);
-        remainingTime = time.difference(now).inMinutes.toString();
+
+        // check if the remaining time less than 1 hour then show it in minutes
+        if (time.difference(now).inHours < 1) {
+          remainingTime = '${time.difference(now).inMinutes}m';
+        } else {
+          remainingTime = '${time.difference(now).inHours}h';
+        }
       } else {
         timeString = DateFormat('EEE, h:mm a').format(time);
-        remainingTime = time.difference(now).inHours.toString();
+        // check if the remaining time less than 1 day then show it in hours
+        if (time.difference(now).inDays < 1) {
+          remainingTime = '${time.difference(now).inHours}h';
+        } else {
+          remainingTime = '${time.difference(now).inDays}d';
+        }
       }
 
       trayService.updateNextReminder(

@@ -3,7 +3,6 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
 import 'package:window_manager/window_manager.dart';
 
 import '../../core/theme/app_theme.dart';
@@ -11,6 +10,10 @@ import '../../data/constants/quotes.dart';
 import '../../data/models/reminder.dart';
 import '../../providers/reminder_provider.dart';
 import '../../services/window_service.dart';
+import 'widgets/alert_animated_icon.dart';
+import 'widgets/alert_controls.dart';
+import 'widgets/alert_quote.dart';
+import 'widgets/alert_time_info.dart';
 
 class AlertWindowApp extends StatelessWidget {
   final ReminderModel reminder;
@@ -137,7 +140,7 @@ class _AlertWindowScreenState extends ConsumerState<AlertWindowScreen>
             child: Column(
               children: [
                 // Animated bell icon
-                _buildAnimatedIcon(context)
+                AlertAnimatedIcon(animation: _pulseController)
                     .animate()
                     .fadeIn(duration: 300.ms)
                     .scale(begin: const Offset(0.5, 0.5)),
@@ -179,21 +182,26 @@ class _AlertWindowScreenState extends ConsumerState<AlertWindowScreen>
                 const Spacer(),
 
                 // Time info
-                _buildTimeInfo(
-                  context,
-                ).animate().fadeIn(delay: 300.ms, duration: 300.ms),
+                const AlertTimeInfo().animate().fadeIn(
+                  delay: 300.ms,
+                  duration: 300.ms,
+                ),
 
                 const SizedBox(height: 24),
 
                 // Motivational Quote
-                _buildQuote(
-                  context,
+                AlertQuote(
+                  quote: _quote,
                 ).animate().fadeIn(duration: 600.ms).slideY(begin: -0.2),
 
                 const SizedBox(height: 24),
 
                 // Dismiss button
-                _buildDismissButton(context)
+                AlertControls(
+                      canDismiss: _canDismiss,
+                      onSnooze: _snoozeReminder,
+                      onDismiss: _dismissReminder,
+                    )
                     .animate()
                     .fadeIn(delay: 400.ms, duration: 300.ms)
                     .slideY(begin: 0.3),
@@ -216,207 +224,6 @@ class _AlertWindowScreenState extends ConsumerState<AlertWindowScreen>
           ),
         ),
       ),
-    );
-  }
-
-  Widget _buildAnimatedIcon(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
-    return AnimatedBuilder(
-      animation: _pulseController,
-      builder: (context, child) {
-        final scale = 1.0 + (_pulseController.value * 0.1);
-        final opacity = 0.3 + (_pulseController.value * 0.3);
-
-        return Stack(
-          alignment: Alignment.center,
-          children: [
-            // Outer pulse ring
-            Transform.scale(
-              scale: scale * 1.4,
-              child: Container(
-                width: 80,
-                height: 80,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: colorScheme.primary.withAlpha(
-                    (opacity * 0.3 * 255).toInt(),
-                  ),
-                ),
-              ),
-            ),
-            // Inner pulse ring
-            Transform.scale(
-              scale: scale * 1.2,
-              child: Container(
-                width: 80,
-                height: 80,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: colorScheme.primary.withAlpha(
-                    (opacity * 0.5 * 255).toInt(),
-                  ),
-                ),
-              ),
-            ),
-            // Icon container
-            Container(
-              width: 80,
-              height: 80,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: colorScheme.primaryContainer,
-                boxShadow: [
-                  BoxShadow(
-                    color: colorScheme.primary.withAlpha(77),
-                    blurRadius: 20,
-                    spreadRadius: 2,
-                  ),
-                ],
-              ),
-              child: Icon(
-                Icons.notifications_active_rounded,
-                size: 40,
-                color: colorScheme.onPrimaryContainer,
-              ),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  Widget _buildTimeInfo(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    final now = DateTime.now();
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-      decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerHighest.withAlpha(128),
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(Icons.access_time_rounded, size: 20, color: colorScheme.primary),
-          const SizedBox(width: 8),
-          Text(
-            DateFormat('h:mm a').format(now),
-            style: theme.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w600,
-              color: colorScheme.onSurface,
-            ),
-          ),
-          const SizedBox(width: 16),
-          Container(
-            width: 4,
-            height: 4,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: colorScheme.outline,
-            ),
-          ),
-          const SizedBox(width: 16),
-          Text(
-            DateFormat('EEE, MMM d').format(now),
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: colorScheme.onSurfaceVariant,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildQuote(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerHighest.withAlpha(77),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: colorScheme.outlineVariant.withAlpha(77)),
-      ),
-      child: Column(
-        children: [
-          Text(
-            '"${_quote['quote']}"',
-            style: theme.textTheme.headlineSmall,
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 4),
-          Text(
-            '- ${_quote['author']}',
-            style: theme.textTheme.bodyMedium,
-            textAlign: TextAlign.center,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDismissButton(BuildContext context) {
-    return Row(
-      children: [
-        // Snooze button
-        Expanded(
-          child: SizedBox(
-            height: 56,
-            child: OutlinedButton(
-              onPressed: _canDismiss ? _snoozeReminder : null,
-              style: OutlinedButton.styleFrom(
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                side: BorderSide(color: Theme.of(context).colorScheme.outline),
-              ),
-              child: const Text(
-                'Snooze',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-              ),
-            ),
-          ),
-        ),
-        const SizedBox(width: 16),
-        // Dismiss button
-        Expanded(
-          flex: 2,
-          child: SizedBox(
-            height: 56,
-            child: FilledButton(
-              onPressed: _canDismiss ? _dismissReminder : null,
-              style: FilledButton.styleFrom(
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    _canDismiss
-                        ? Icons.check_rounded
-                        : Icons.hourglass_top_rounded,
-                    size: 24,
-                  ),
-                  const SizedBox(width: 12),
-                  Text(
-                    _canDismiss ? 'Acknowledge' : 'Wait...',
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ],
     );
   }
 }

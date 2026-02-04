@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../../../data/models/reminder.dart';
+import 'reminder_status_indicator.dart';
+import 'reminder_time_remaining.dart';
 
 class ReminderCard extends StatefulWidget {
   final ReminderModel reminder;
@@ -43,7 +45,7 @@ class _ReminderCardState extends State<ReminderCard> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Status indicator
-              _buildStatusIndicator(context, isPast),
+              ReminderStatusIndicator(reminder: reminder, isPast: isPast),
               const SizedBox(width: 16),
 
               // Content
@@ -142,7 +144,7 @@ class _ReminderCardState extends State<ReminderCard> {
 
                         // Time remaining
                         if (!isPast && reminder.isActive)
-                          _buildTimeRemaining(context, reminder),
+                          ReminderTimeRemaining(reminder: reminder),
                       ],
                     ),
                   ],
@@ -155,71 +157,6 @@ class _ReminderCardState extends State<ReminderCard> {
               Switch(value: reminder.isActive, onChanged: widget.onToggle),
             ],
           ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildStatusIndicator(BuildContext context, bool isPast) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final reminder = widget.reminder;
-
-    Color indicatorColor;
-    IconData indicatorIcon;
-
-    if (!reminder.isActive) {
-      indicatorColor = colorScheme.outline;
-      indicatorIcon = Icons.pause_rounded;
-    } else if (isPast) {
-      indicatorColor = colorScheme.error;
-      indicatorIcon = Icons.warning_rounded;
-    } else if (reminder.isRecurring) {
-      indicatorColor = colorScheme.tertiary;
-      indicatorIcon = Icons.repeat_rounded;
-    } else {
-      indicatorColor = colorScheme.primary;
-      indicatorIcon = Icons.notifications_active_rounded;
-    }
-
-    return Container(
-      width: 44,
-      height: 44,
-      decoration: BoxDecoration(
-        color: indicatorColor.withAlpha(38),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Icon(indicatorIcon, color: indicatorColor, size: 24),
-    );
-  }
-
-  Widget _buildTimeRemaining(BuildContext context, ReminderModel reminder) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final duration = reminder.getDurationUntilTrigger();
-
-    if (duration == null) return const SizedBox.shrink();
-
-    String text;
-    if (duration.inDays > 0) {
-      text = '${duration.inDays}d left';
-    } else if (duration.inHours > 0) {
-      text = '${duration.inHours}h left';
-    } else if (duration.inMinutes > 0) {
-      text = '${duration.inMinutes}m left';
-    } else {
-      text = 'Soon';
-    }
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: colorScheme.primaryContainer.withAlpha(128),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Text(
-        text,
-        style: Theme.of(context).textTheme.labelSmall?.copyWith(
-          color: colorScheme.onPrimaryContainer,
-          fontWeight: FontWeight.w500,
         ),
       ),
     );

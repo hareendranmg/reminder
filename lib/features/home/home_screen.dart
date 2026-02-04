@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:window_manager/window_manager.dart';
 
@@ -10,6 +9,8 @@ import '../../services/tray_service.dart';
 import '../../services/window_service.dart';
 import '../reminder/create_reminder_screen.dart';
 import '../settings/settings_screen.dart';
+import 'widgets/home_app_bar.dart';
+import 'widgets/home_fab.dart';
 import 'widgets/reminder_list.dart';
 import 'widgets/sidebar.dart';
 
@@ -131,7 +132,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                     : Column(
                         children: [
                           // App bar
-                          _buildAppBar(context, currentFilter),
+                          HomeAppBar(
+                            isSearchActive: _isSearchActive,
+                            searchController: _searchController,
+                            searchFocusNode: _searchFocusNode,
+                            filter: currentFilter,
+                            onSearchToggle: () =>
+                                setState(() => _isSearchActive = true),
+                            onCloseSearch: () {
+                              setState(() => _isSearchActive = false);
+                              _searchController.clear();
+                              ref.read(searchQueryProvider.notifier).state = '';
+                            },
+                          ),
 
                           // Reminder list
                           const Expanded(child: ReminderList()),
@@ -141,119 +154,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             ],
           ),
           floatingActionButton: currentView == AppView.reminders
-              ? _buildFAB(context)
+              ? HomeFAB(
+                  onPressed: _showCreateReminderDialog,
+                  controller: _fabController,
+                )
               : null,
         ),
       ),
     );
-  }
-
-  Widget _buildAppBar(BuildContext context, ReminderFilter filter) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-
-    return Container(
-      height: 64,
-      padding: const EdgeInsets.symmetric(horizontal: 24),
-      decoration: BoxDecoration(
-        color: colorScheme.surface,
-        border: Border(
-          bottom: BorderSide(color: colorScheme.outlineVariant.withAlpha(77)),
-        ),
-      ),
-      child: Row(
-        children: [
-          if (_isSearchActive)
-            Expanded(
-              child: TextField(
-                controller: _searchController,
-                focusNode: _searchFocusNode,
-                autofocus: true,
-                decoration: InputDecoration(
-                  hintText: 'Search reminders...',
-                  border: InputBorder.none,
-                  filled: false,
-                  hintStyle: theme.textTheme.bodyLarge?.copyWith(
-                    color: colorScheme.onSurfaceVariant.withAlpha(128),
-                  ),
-                ),
-                style: theme.textTheme.bodyLarge?.copyWith(
-                  color: colorScheme.onSurface,
-                ),
-                onChanged: (value) {
-                  ref.read(searchQueryProvider.notifier).state = value;
-                },
-              ).animate().fadeIn(duration: 200.ms),
-            )
-          else
-            Text(
-              filter.label,
-              style: theme.textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.w600,
-                color: colorScheme.onSurface,
-              ),
-            ).animate().fadeIn(duration: 200.ms).slideX(begin: -0.1, end: 0),
-
-          const Spacer(),
-
-          if (_isSearchActive)
-            IconButton(
-              onPressed: () {
-                setState(() => _isSearchActive = false);
-                _searchController.clear();
-                ref.read(searchQueryProvider.notifier).state = '';
-              },
-              icon: Icon(
-                Icons.close_rounded,
-                color: colorScheme.onSurfaceVariant,
-              ),
-              tooltip: 'Close search',
-            )
-          else
-            IconButton(
-              onPressed: () {
-                setState(() => _isSearchActive = true);
-              },
-              icon: Icon(
-                Icons.search_rounded,
-                color: colorScheme.onSurfaceVariant,
-              ),
-              tooltip: 'Search reminders',
-            ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildFAB(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
-    return FloatingActionButton.extended(
-          onPressed: _showCreateReminderDialog,
-          icon: AnimatedBuilder(
-            animation: _fabController,
-            builder: (context, child) {
-              return Transform.rotate(
-                angle: _fabController.value * 0.5,
-                child: Icon(
-                  Icons.add_rounded,
-                  color: colorScheme.onPrimaryContainer,
-                ),
-              );
-            },
-          ),
-          label: Text(
-            'New Reminder',
-            style: TextStyle(
-              color: colorScheme.onPrimaryContainer,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          elevation: 2,
-          highlightElevation: 4,
-        )
-        .animate()
-        .fadeIn(delay: 300.ms, duration: 300.ms)
-        .scale(begin: const Offset(0.8, 0.8), end: const Offset(1, 1));
   }
 }
