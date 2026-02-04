@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/foundation.dart';
 import 'package:launch_at_startup/launch_at_startup.dart';
 import 'package:package_info_plus/package_info_plus.dart';
@@ -15,10 +17,8 @@ class StartupService {
 
     launchAtStartup.setup(
       appName: packageInfo.appName,
-      appPath: Uri.base
-          .toFilePath(), // Will be updated correctly by the package for compiled apps
-      packageName:
-          'com.hareendranmg.reminder', // Replace if you have a specific package name
+      appPath: Platform.resolvedExecutable,
+      packageName: 'com.hareendranmg.reminder',
     );
   }
 
