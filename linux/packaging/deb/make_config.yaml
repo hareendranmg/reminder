@@ -1,0 +1,24 @@
+display_name: Reminder
+package_name: reminder
+maintainer:
+  name: Hareendran MG
+  email: hareendranmg@gmail.com
+priority: optional
+section: x11
+essential: false
+icon: assets/icons/app_icon.png
+
+postinstall_scripts:
+  - echo "Installed Reminder app"
+postuninstall_scripts:
+  - echo "Uninstalled Reminder app"
+
+keywords:
+  - Reminder
+
+generic_name: Reminder Application
+
+categories:
+  - Reminder
+
+startup_notify: true

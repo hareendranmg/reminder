@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import 'preferences_provider.dart';
 import 'providers/sound_provider.dart';
@@ -235,10 +236,24 @@ class SettingsScreen extends ConsumerWidget {
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),
                     ),
-                    child: const ListTile(
-                      title: Text('Reminder'),
-                      subtitle: Text('Version 1.0.0'),
-                      leading: Icon(Icons.info_outline_rounded),
+                    child: Column(
+                      children: [
+                        const ListTile(
+                          title: Text('Reminder'),
+                          subtitle: Text('Version 1.0.0'),
+                          leading: Icon(Icons.info_outline_rounded),
+                        ),
+                        const Divider(height: 1),
+                        ListTile(
+                          title: const Text('Hareendran MG'),
+                          subtitle: const Text(
+                            "Architect of questionable decisions.",
+                          ),
+                          leading: const Icon(Icons.person_rounded),
+                          onTap: () =>
+                              launchUrl(Uri.parse('https://hareendranmg.com')),
+                        ),
+                      ],
                     ),
                   ),
                 ],
