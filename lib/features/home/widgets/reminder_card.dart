@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../../../data/models/reminder.dart';
+import '../../security/passcode_dialog.dart';
 import 'reminder_status_indicator.dart';
 import 'reminder_time_remaining.dart';
 
@@ -28,6 +29,9 @@ class _ReminderCardState extends State<ReminderCard> {
     final colorScheme = theme.colorScheme;
     final reminder = widget.reminder;
 
+    // Check if sensitive
+    final isSensitive = reminder.isSensitive;
+
     final isPast =
         !reminder.isRecurring && reminder.dateTime.isBefore(DateTime.now());
 
@@ -37,7 +41,22 @@ class _ReminderCardState extends State<ReminderCard> {
           ? colorScheme.surface
           : colorScheme.surfaceContainerHighest.withAlpha(128),
       child: InkWell(
-        onTap: widget.onTap,
+        onTap: () async {
+          if (isSensitive) {
+            // Prompt for passcode
+            final verified = await showDialog<bool>(
+              context: context,
+              builder: (context) =>
+                  const PasscodeVerificationDialog(title: 'Unlock Reminder'),
+            );
+
+            if (verified == true) {
+              widget.onTap?.call();
+            }
+          } else {
+            widget.onTap?.call();
+          }
+        },
         borderRadius: BorderRadius.circular(16),
         child: Padding(
           padding: const EdgeInsets.all(16),
@@ -56,9 +75,17 @@ class _ReminderCardState extends State<ReminderCard> {
                     // Title row
                     Row(
                       children: [
+                        if (isSensitive) ...[
+                          Icon(
+                            Icons.lock_rounded,
+                            size: 16,
+                            color: colorScheme.secondary,
+                          ),
+                          const SizedBox(width: 8),
+                        ],
                         Expanded(
                           child: Text(
-                            reminder.name,
+                            isSensitive ? 'Sensitive Reminder' : reminder.name,
                             style: theme.textTheme.titleMedium?.copyWith(
                               fontWeight: FontWeight.w600,
                               color: reminder.isActive
@@ -67,6 +94,7 @@ class _ReminderCardState extends State<ReminderCard> {
                               decoration: reminder.isActive
                                   ? null
                                   : TextDecoration.lineThrough,
+                              fontStyle: isSensitive ? FontStyle.italic : null,
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
@@ -105,7 +133,8 @@ class _ReminderCardState extends State<ReminderCard> {
                     ),
 
                     // Description
-                    if (reminder.description != null &&
+                    if (!isSensitive &&
+                        reminder.description != null &&
                         reminder.description!.isNotEmpty) ...[
                       const SizedBox(height: 4),
                       Text(
@@ -115,6 +144,15 @@ class _ReminderCardState extends State<ReminderCard> {
                         ),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
+                      ),
+                    ] else if (isSensitive) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        'Tap to unlock',
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: colorScheme.onSurfaceVariant,
+                          fontStyle: FontStyle.italic,
+                        ),
                       ),
                     ],
 

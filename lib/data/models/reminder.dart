@@ -1,6 +1,7 @@
 import 'dart:convert';
-import '../database/app_database.dart' as db;
+
 import '../../core/constants/app_constants.dart';
+import '../database/app_database.dart' as db;
 
 /// Reminder model for use throughout the app
 class ReminderModel {
@@ -8,6 +9,7 @@ class ReminderModel {
   final String name;
   final String? description;
   final bool isRecurring;
+  final bool isSensitive;
   final DateTime dateTime;
   final RecurringType? recurringType;
   final int? recurringInterval;
@@ -21,6 +23,7 @@ class ReminderModel {
     required this.name,
     this.description,
     this.isRecurring = false,
+    this.isSensitive = false,
     required this.dateTime,
     this.recurringType,
     this.recurringInterval,
@@ -44,7 +47,8 @@ class ReminderModel {
       id: entity.id,
       name: entity.name,
       description: entity.description,
-      isRecurring: entity.isRecurring,
+      isRecurring: entity.isRecurring, // Drift generated code handles defaults
+      isSensitive: entity.isSensitive, // Drift generated code handles defaults
       dateTime: entity.reminderDateTime,
       recurringType: recurringType,
       recurringInterval: entity.recurringInterval,
@@ -70,6 +74,7 @@ class ReminderModel {
       name: json['name'] as String,
       description: json['description'] as String?,
       isRecurring: json['isRecurring'] as bool? ?? false,
+      isSensitive: json['isSensitive'] as bool? ?? false,
       dateTime: DateTime.parse(json['dateTime'] as String),
       recurringType: recurringType,
       recurringInterval: json['recurringInterval'] as int?,
@@ -93,6 +98,7 @@ class ReminderModel {
       'name': name,
       'description': description,
       'isRecurring': isRecurring,
+      'isSensitive': isSensitive,
       'dateTime': dateTime.toIso8601String(),
       'recurringType': recurringType?.name,
       'recurringInterval': recurringInterval,
@@ -198,6 +204,7 @@ class ReminderModel {
     String? name,
     String? description,
     bool? isRecurring,
+    bool? isSensitive,
     DateTime? dateTime,
     RecurringType? recurringType,
     int? recurringInterval,
@@ -211,6 +218,7 @@ class ReminderModel {
       name: name ?? this.name,
       description: description ?? this.description,
       isRecurring: isRecurring ?? this.isRecurring,
+      isSensitive: isSensitive ?? this.isSensitive,
       dateTime: dateTime ?? this.dateTime,
       recurringType: recurringType ?? this.recurringType,
       recurringInterval: recurringInterval ?? this.recurringInterval,
@@ -232,6 +240,6 @@ class ReminderModel {
 
   @override
   String toString() {
-    return 'ReminderModel(id: $id, name: $name, isRecurring: $isRecurring, dateTime: $dateTime)';
+    return 'ReminderModel(id: $id, name: $name, isRecurring: $isRecurring, isSensitive: $isSensitive, dateTime: $dateTime)';
   }
 }

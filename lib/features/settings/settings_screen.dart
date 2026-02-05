@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../security/passcode_dialog.dart';
 import 'preferences_provider.dart';
+import 'providers/passcode_provider.dart';
 import 'providers/sound_provider.dart';
 import 'providers/startup_provider.dart';
 
@@ -216,6 +218,86 @@ class SettingsScreen extends ConsumerWidget {
                           },
                         ),
                       ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 32),
+
+                  // Security Section
+                  Text(
+                    'Security',
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      color: colorScheme.primary,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Card(
+                    elevation: 0,
+                    color: colorScheme.surfaceContainerHighest.withAlpha(77),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Consumer(
+                      builder: (context, ref, _) {
+                        final passcode = ref.watch(passcodeProvider);
+                        final hasPasscode = passcode != null;
+
+                        return ListTile(
+                          title: Text(
+                            hasPasscode ? 'Change Passcode' : 'Set Passcode',
+                          ),
+                          subtitle: Text(
+                            hasPasscode
+                                ? 'Update your security passcode'
+                                : 'Protect sensitive reminders',
+                          ),
+                          leading: const Icon(Icons.lock_outline_rounded),
+                          trailing: const Icon(Icons.chevron_right_rounded),
+                          onTap: () async {
+                            if (hasPasscode) {
+                              // Verify old passcode first
+                              final verified = await showDialog<bool>(
+                                context: context,
+                                builder: (context) =>
+                                    const PasscodeVerificationDialog(
+                                      title: 'Verify Old Passcode',
+                                    ),
+                              );
+
+                              if (verified != true) return;
+                            }
+
+                            if (!context.mounted) return;
+
+                            // Set new passcode
+                            final newPasscode = await showDialog<String>(
+                              context: context,
+                              builder: (context) => PasscodeVerificationDialog(
+                                title: hasPasscode
+                                    ? 'Enter New Passcode'
+                                    : 'Set Passcode',
+                                isSettingNew: true,
+                              ),
+                            );
+
+                            if (newPasscode != null &&
+                                newPasscode.isNotEmpty &&
+                                context.mounted) {
+                              await ref
+                                  .read(passcodeProvider.notifier)
+                                  .setPasscode(newPasscode);
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text(
+                                    'Passcode updated successfully',
+                                  ),
+                                ),
+                              );
+                            }
+                          },
+                        );
+                      },
                     ),
                   ),
 

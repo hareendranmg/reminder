@@ -14,6 +14,9 @@ class Reminders extends Table {
   /// Whether this is a recurring reminder
   BoolColumn get isRecurring => boolean().withDefault(Constant(false))();
 
+  /// Whether this reminder is sensitive (requires passcode)
+  BoolColumn get isSensitive => boolean().withDefault(Constant(false))();
+
   /// The date and time for the reminder (or start time for recurring)
   DateTimeColumn get reminderDateTime => dateTime()();
 

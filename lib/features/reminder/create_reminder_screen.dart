@@ -5,6 +5,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_constants.dart';
 import '../../data/models/reminder.dart';
 import '../../providers/reminder_provider.dart';
+import '../security/passcode_dialog.dart';
+import '../settings/providers/passcode_provider.dart';
 import 'widgets/recurring_selector.dart';
 import 'widgets/reminder_date_time_section.dart';
 import 'widgets/reminder_recurring_toggle.dart';
@@ -31,6 +33,7 @@ class _CreateReminderScreenState extends ConsumerState<CreateReminderScreen> {
   final _descriptionController = TextEditingController();
 
   bool _isRecurring = false;
+  bool _isSensitive = false;
   DateTime _selectedDate = DateTime.now().add(const Duration(hours: 1));
   TimeOfDay _selectedTime = TimeOfDay.now();
   RecurringType _recurringType = RecurringType.days;
@@ -46,6 +49,7 @@ class _CreateReminderScreenState extends ConsumerState<CreateReminderScreen> {
       _nameController.text = reminder.name;
       _descriptionController.text = reminder.description ?? '';
       _isRecurring = reminder.isRecurring;
+      _isSensitive = reminder.isSensitive;
       _selectedDate = reminder.dateTime;
       _selectedTime = TimeOfDay.fromDateTime(reminder.dateTime);
       if (reminder.recurringType != null) {
@@ -69,6 +73,40 @@ class _CreateReminderScreenState extends ConsumerState<CreateReminderScreen> {
     super.dispose();
   }
 
+  Future<void> _handleSensitiveToggle(bool value) async {
+    if (value) {
+      // Check if passcode is set
+      final hasPasscode = ref.read(passcodeProvider.notifier).hasPasscode;
+      if (!hasPasscode) {
+        // Prompt to set passcode
+        final result = await showDialog<String>(
+          context: context,
+          builder: (context) => const PasscodeVerificationDialog(
+            title: 'Set Passcode',
+            isSettingNew: true,
+          ),
+        );
+
+        if (result != null && result.isNotEmpty) {
+          await ref.read(passcodeProvider.notifier).setPasscode(result);
+          if (mounted) {
+            setState(() => _isSensitive = true);
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Passcode set successfully')),
+            );
+          }
+        } else {
+          // User cancelled setting passcode, revert toggle
+          return;
+        }
+      } else {
+        setState(() => _isSensitive = true);
+      }
+    } else {
+      setState(() => _isSensitive = false);
+    }
+  }
+
   Future<void> _saveReminder() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -90,6 +128,7 @@ class _CreateReminderScreenState extends ConsumerState<CreateReminderScreen> {
             ? null
             : _descriptionController.text.trim(),
         isRecurring: _isRecurring,
+        isSensitive: _isSensitive,
         dateTime: dateTime,
         recurringType: _isRecurring ? _recurringType : null,
         recurringInterval: _isRecurring ? _recurringInterval : null,
@@ -342,6 +381,27 @@ class _CreateReminderScreenState extends ConsumerState<CreateReminderScreen> {
                       isRecurring: _isRecurring,
                       onToggle: (value) => setState(() => _isRecurring = value),
                     ),
+
+                    const SizedBox(height: 16),
+
+                    // Sensitive Toggle
+                    SwitchListTile(
+                      contentPadding: EdgeInsets.zero,
+                      title: const Text('Sensitive Notification'),
+                      subtitle: const Text(
+                        'Hide content with passcode protection',
+                      ),
+                      value: _isSensitive,
+                      onChanged: _handleSensitiveToggle,
+                      secondary: Icon(
+                        _isSensitive
+                            ? Icons.lock_rounded
+                            : Icons.lock_open_rounded,
+                        color: _isSensitive
+                            ? colorScheme.primary
+                            : colorScheme.outline,
+                      ),
+                    ).animate().fadeIn(delay: 180.ms, duration: 200.ms),
 
                     const SizedBox(height: 24),
 

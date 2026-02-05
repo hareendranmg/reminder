@@ -61,6 +61,21 @@ class $RemindersTable extends Reminders
     ),
     defaultValue: Constant(false),
   );
+  static const VerificationMeta _isSensitiveMeta = const VerificationMeta(
+    'isSensitive',
+  );
+  @override
+  late final GeneratedColumn<bool> isSensitive = GeneratedColumn<bool>(
+    'is_sensitive',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("is_sensitive" IN (0, 1))',
+    ),
+    defaultValue: Constant(false),
+  );
   static const VerificationMeta _reminderDateTimeMeta = const VerificationMeta(
     'reminderDateTime',
   );
@@ -152,6 +167,7 @@ class $RemindersTable extends Reminders
     name,
     description,
     isRecurring,
+    isSensitive,
     reminderDateTime,
     recurringType,
     recurringInterval,
@@ -198,6 +214,15 @@ class $RemindersTable extends Reminders
         isRecurring.isAcceptableOrUnknown(
           data['is_recurring']!,
           _isRecurringMeta,
+        ),
+      );
+    }
+    if (data.containsKey('is_sensitive')) {
+      context.handle(
+        _isSensitiveMeta,
+        isSensitive.isAcceptableOrUnknown(
+          data['is_sensitive']!,
+          _isSensitiveMeta,
         ),
       );
     }
@@ -282,6 +307,10 @@ class $RemindersTable extends Reminders
         DriftSqlType.bool,
         data['${effectivePrefix}is_recurring'],
       )!,
+      isSensitive: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}is_sensitive'],
+      )!,
       reminderDateTime: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}reminder_date_time'],
@@ -332,6 +361,9 @@ class Reminder extends DataClass implements Insertable<Reminder> {
   /// Whether this is a recurring reminder
   final bool isRecurring;
 
+  /// Whether this reminder is sensitive (requires passcode)
+  final bool isSensitive;
+
   /// The date and time for the reminder (or start time for recurring)
   final DateTime reminderDateTime;
 
@@ -358,6 +390,7 @@ class Reminder extends DataClass implements Insertable<Reminder> {
     required this.name,
     this.description,
     required this.isRecurring,
+    required this.isSensitive,
     required this.reminderDateTime,
     this.recurringType,
     this.recurringInterval,
@@ -375,6 +408,7 @@ class Reminder extends DataClass implements Insertable<Reminder> {
       map['description'] = Variable<String>(description);
     }
     map['is_recurring'] = Variable<bool>(isRecurring);
+    map['is_sensitive'] = Variable<bool>(isSensitive);
     map['reminder_date_time'] = Variable<DateTime>(reminderDateTime);
     if (!nullToAbsent || recurringType != null) {
       map['recurring_type'] = Variable<String>(recurringType);
@@ -399,6 +433,7 @@ class Reminder extends DataClass implements Insertable<Reminder> {
           ? const Value.absent()
           : Value(description),
       isRecurring: Value(isRecurring),
+      isSensitive: Value(isSensitive),
       reminderDateTime: Value(reminderDateTime),
       recurringType: recurringType == null && nullToAbsent
           ? const Value.absent()
@@ -425,6 +460,7 @@ class Reminder extends DataClass implements Insertable<Reminder> {
       name: serializer.fromJson<String>(json['name']),
       description: serializer.fromJson<String?>(json['description']),
       isRecurring: serializer.fromJson<bool>(json['isRecurring']),
+      isSensitive: serializer.fromJson<bool>(json['isSensitive']),
       reminderDateTime: serializer.fromJson<DateTime>(json['reminderDateTime']),
       recurringType: serializer.fromJson<String?>(json['recurringType']),
       recurringInterval: serializer.fromJson<int?>(json['recurringInterval']),
@@ -442,6 +478,7 @@ class Reminder extends DataClass implements Insertable<Reminder> {
       'name': serializer.toJson<String>(name),
       'description': serializer.toJson<String?>(description),
       'isRecurring': serializer.toJson<bool>(isRecurring),
+      'isSensitive': serializer.toJson<bool>(isSensitive),
       'reminderDateTime': serializer.toJson<DateTime>(reminderDateTime),
       'recurringType': serializer.toJson<String?>(recurringType),
       'recurringInterval': serializer.toJson<int?>(recurringInterval),
@@ -457,6 +494,7 @@ class Reminder extends DataClass implements Insertable<Reminder> {
     String? name,
     Value<String?> description = const Value.absent(),
     bool? isRecurring,
+    bool? isSensitive,
     DateTime? reminderDateTime,
     Value<String?> recurringType = const Value.absent(),
     Value<int?> recurringInterval = const Value.absent(),
@@ -469,6 +507,7 @@ class Reminder extends DataClass implements Insertable<Reminder> {
     name: name ?? this.name,
     description: description.present ? description.value : this.description,
     isRecurring: isRecurring ?? this.isRecurring,
+    isSensitive: isSensitive ?? this.isSensitive,
     reminderDateTime: reminderDateTime ?? this.reminderDateTime,
     recurringType: recurringType.present
         ? recurringType.value
@@ -493,6 +532,9 @@ class Reminder extends DataClass implements Insertable<Reminder> {
       isRecurring: data.isRecurring.present
           ? data.isRecurring.value
           : this.isRecurring,
+      isSensitive: data.isSensitive.present
+          ? data.isSensitive.value
+          : this.isSensitive,
       reminderDateTime: data.reminderDateTime.present
           ? data.reminderDateTime.value
           : this.reminderDateTime,
@@ -518,6 +560,7 @@ class Reminder extends DataClass implements Insertable<Reminder> {
           ..write('name: $name, ')
           ..write('description: $description, ')
           ..write('isRecurring: $isRecurring, ')
+          ..write('isSensitive: $isSensitive, ')
           ..write('reminderDateTime: $reminderDateTime, ')
           ..write('recurringType: $recurringType, ')
           ..write('recurringInterval: $recurringInterval, ')
@@ -535,6 +578,7 @@ class Reminder extends DataClass implements Insertable<Reminder> {
     name,
     description,
     isRecurring,
+    isSensitive,
     reminderDateTime,
     recurringType,
     recurringInterval,
@@ -551,6 +595,7 @@ class Reminder extends DataClass implements Insertable<Reminder> {
           other.name == this.name &&
           other.description == this.description &&
           other.isRecurring == this.isRecurring &&
+          other.isSensitive == this.isSensitive &&
           other.reminderDateTime == this.reminderDateTime &&
           other.recurringType == this.recurringType &&
           other.recurringInterval == this.recurringInterval &&
@@ -565,6 +610,7 @@ class RemindersCompanion extends UpdateCompanion<Reminder> {
   final Value<String> name;
   final Value<String?> description;
   final Value<bool> isRecurring;
+  final Value<bool> isSensitive;
   final Value<DateTime> reminderDateTime;
   final Value<String?> recurringType;
   final Value<int?> recurringInterval;
@@ -577,6 +623,7 @@ class RemindersCompanion extends UpdateCompanion<Reminder> {
     this.name = const Value.absent(),
     this.description = const Value.absent(),
     this.isRecurring = const Value.absent(),
+    this.isSensitive = const Value.absent(),
     this.reminderDateTime = const Value.absent(),
     this.recurringType = const Value.absent(),
     this.recurringInterval = const Value.absent(),
@@ -590,6 +637,7 @@ class RemindersCompanion extends UpdateCompanion<Reminder> {
     required String name,
     this.description = const Value.absent(),
     this.isRecurring = const Value.absent(),
+    this.isSensitive = const Value.absent(),
     required DateTime reminderDateTime,
     this.recurringType = const Value.absent(),
     this.recurringInterval = const Value.absent(),
@@ -604,6 +652,7 @@ class RemindersCompanion extends UpdateCompanion<Reminder> {
     Expression<String>? name,
     Expression<String>? description,
     Expression<bool>? isRecurring,
+    Expression<bool>? isSensitive,
     Expression<DateTime>? reminderDateTime,
     Expression<String>? recurringType,
     Expression<int>? recurringInterval,
@@ -617,6 +666,7 @@ class RemindersCompanion extends UpdateCompanion<Reminder> {
       if (name != null) 'name': name,
       if (description != null) 'description': description,
       if (isRecurring != null) 'is_recurring': isRecurring,
+      if (isSensitive != null) 'is_sensitive': isSensitive,
       if (reminderDateTime != null) 'reminder_date_time': reminderDateTime,
       if (recurringType != null) 'recurring_type': recurringType,
       if (recurringInterval != null) 'recurring_interval': recurringInterval,
@@ -632,6 +682,7 @@ class RemindersCompanion extends UpdateCompanion<Reminder> {
     Value<String>? name,
     Value<String?>? description,
     Value<bool>? isRecurring,
+    Value<bool>? isSensitive,
     Value<DateTime>? reminderDateTime,
     Value<String?>? recurringType,
     Value<int?>? recurringInterval,
@@ -645,6 +696,7 @@ class RemindersCompanion extends UpdateCompanion<Reminder> {
       name: name ?? this.name,
       description: description ?? this.description,
       isRecurring: isRecurring ?? this.isRecurring,
+      isSensitive: isSensitive ?? this.isSensitive,
       reminderDateTime: reminderDateTime ?? this.reminderDateTime,
       recurringType: recurringType ?? this.recurringType,
       recurringInterval: recurringInterval ?? this.recurringInterval,
@@ -669,6 +721,9 @@ class RemindersCompanion extends UpdateCompanion<Reminder> {
     }
     if (isRecurring.present) {
       map['is_recurring'] = Variable<bool>(isRecurring.value);
+    }
+    if (isSensitive.present) {
+      map['is_sensitive'] = Variable<bool>(isSensitive.value);
     }
     if (reminderDateTime.present) {
       map['reminder_date_time'] = Variable<DateTime>(reminderDateTime.value);
@@ -701,6 +756,7 @@ class RemindersCompanion extends UpdateCompanion<Reminder> {
           ..write('name: $name, ')
           ..write('description: $description, ')
           ..write('isRecurring: $isRecurring, ')
+          ..write('isSensitive: $isSensitive, ')
           ..write('reminderDateTime: $reminderDateTime, ')
           ..write('recurringType: $recurringType, ')
           ..write('recurringInterval: $recurringInterval, ')
@@ -731,6 +787,7 @@ typedef $$RemindersTableCreateCompanionBuilder =
       required String name,
       Value<String?> description,
       Value<bool> isRecurring,
+      Value<bool> isSensitive,
       required DateTime reminderDateTime,
       Value<String?> recurringType,
       Value<int?> recurringInterval,
@@ -745,6 +802,7 @@ typedef $$RemindersTableUpdateCompanionBuilder =
       Value<String> name,
       Value<String?> description,
       Value<bool> isRecurring,
+      Value<bool> isSensitive,
       Value<DateTime> reminderDateTime,
       Value<String?> recurringType,
       Value<int?> recurringInterval,
@@ -780,6 +838,11 @@ class $$RemindersTableFilterComposer
 
   ColumnFilters<bool> get isRecurring => $composableBuilder(
     column: $table.isRecurring,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get isSensitive => $composableBuilder(
+    column: $table.isSensitive,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -848,6 +911,11 @@ class $$RemindersTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<bool> get isSensitive => $composableBuilder(
+    column: $table.isSensitive,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<DateTime> get reminderDateTime => $composableBuilder(
     column: $table.reminderDateTime,
     builder: (column) => ColumnOrderings(column),
@@ -906,6 +974,11 @@ class $$RemindersTableAnnotationComposer
 
   GeneratedColumn<bool> get isRecurring => $composableBuilder(
     column: $table.isRecurring,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get isSensitive => $composableBuilder(
+    column: $table.isSensitive,
     builder: (column) => column,
   );
 
@@ -971,6 +1044,7 @@ class $$RemindersTableTableManager
                 Value<String> name = const Value.absent(),
                 Value<String?> description = const Value.absent(),
                 Value<bool> isRecurring = const Value.absent(),
+                Value<bool> isSensitive = const Value.absent(),
                 Value<DateTime> reminderDateTime = const Value.absent(),
                 Value<String?> recurringType = const Value.absent(),
                 Value<int?> recurringInterval = const Value.absent(),
@@ -983,6 +1057,7 @@ class $$RemindersTableTableManager
                 name: name,
                 description: description,
                 isRecurring: isRecurring,
+                isSensitive: isSensitive,
                 reminderDateTime: reminderDateTime,
                 recurringType: recurringType,
                 recurringInterval: recurringInterval,
@@ -997,6 +1072,7 @@ class $$RemindersTableTableManager
                 required String name,
                 Value<String?> description = const Value.absent(),
                 Value<bool> isRecurring = const Value.absent(),
+                Value<bool> isSensitive = const Value.absent(),
                 required DateTime reminderDateTime,
                 Value<String?> recurringType = const Value.absent(),
                 Value<int?> recurringInterval = const Value.absent(),
@@ -1009,6 +1085,7 @@ class $$RemindersTableTableManager
                 name: name,
                 description: description,
                 isRecurring: isRecurring,
+                isSensitive: isSensitive,
                 reminderDateTime: reminderDateTime,
                 recurringType: recurringType,
                 recurringInterval: recurringInterval,
