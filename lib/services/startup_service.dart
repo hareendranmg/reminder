@@ -20,6 +20,12 @@ class StartupService {
       appPath: Platform.resolvedExecutable,
       packageName: 'com.hareendranmg.reminder',
     );
+
+    // If enabled, re-enable to update the path in case it changed
+    // (e.g. switching from dev build to installed production build)
+    if (await isEnabled()) {
+      await enable();
+    }
   }
 
   Future<void> enable() async {
