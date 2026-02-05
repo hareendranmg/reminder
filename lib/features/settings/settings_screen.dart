@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import '../../core/constants/app_constants.dart';
+import '../../providers/version_provider.dart';
 import '../security/passcode_dialog.dart';
 import 'preferences_provider.dart';
 import 'providers/passcode_provider.dart';
@@ -320,9 +320,18 @@ class SettingsScreen extends ConsumerWidget {
                     ),
                     child: Column(
                       children: [
-                        const ListTile(
+                        ListTile(
                           title: Text('Reminder'),
-                          subtitle: Text('Version ${AppConstants.appVersion}'),
+                          subtitle: Consumer(
+                            builder: (context, ref, child) {
+                              final versionAsync = ref.watch(versionProvider);
+                              return versionAsync.when(
+                                data: (version) => Text('Version $version'),
+                                loading: () => const Text('Version ...'),
+                                error: (_, __) => const Text('Version Unknown'),
+                              );
+                            },
+                          ),
                           leading: Icon(Icons.info_outline_rounded),
                         ),
                         const Divider(height: 1),
