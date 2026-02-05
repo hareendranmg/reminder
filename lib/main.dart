@@ -8,7 +8,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:window_manager/window_manager.dart';
 
 import 'app.dart';
-import 'core/constants/app_constants.dart';
 import 'data/models/reminder.dart';
 import 'features/alert/alert_window.dart';
 import 'features/settings/preferences_provider.dart';
@@ -46,12 +45,6 @@ Future<void> main(List<String> args) async {
         await windowManager.setResizable(false);
         await windowManager.setMinimizable(false);
         await windowManager.setMaximizable(false);
-        await windowManager.setSize(
-          const Size(
-            AppConstants.alertWindowWidth,
-            AppConstants.alertWindowHeight,
-          ),
-        );
         await windowManager.center();
         await windowManager.setTitle('Reminder: ${reminder.name}');
 
