@@ -10,6 +10,7 @@ import '../../data/constants/quotes.dart';
 import '../../data/models/reminder.dart';
 import '../../providers/reminder_provider.dart';
 import '../../services/window_service.dart';
+import '../security/passcode_dialog.dart';
 import 'widgets/alert_animated_icon.dart';
 import 'widgets/alert_controls.dart';
 import 'widgets/alert_quote.dart';
@@ -57,10 +58,12 @@ class _AlertWindowScreenState extends ConsumerState<AlertWindowScreen>
   late AnimationController _pulseController;
   late Map<String, String> _quote;
   bool _canDismiss = false;
+  late bool _isLocked;
 
   @override
   void initState() {
     super.initState();
+    _isLocked = widget.reminder.isSensitive;
     _quote = motivationalQuotes[Random().nextInt(motivationalQuotes.length)];
     windowManager.addListener(this);
 
@@ -116,6 +119,18 @@ class _AlertWindowScreenState extends ConsumerState<AlertWindowScreen>
     await WindowService.closeAlertWindow(widget.windowId);
   }
 
+  Future<void> _unlockReminder() async {
+    final verified = await showDialog<bool>(
+      context: context,
+      builder: (context) =>
+          const PasscodeVerificationDialog(title: 'Unlock Reminder'),
+    );
+
+    if (verified == true && mounted) {
+      setState(() => _isLocked = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -139,32 +154,52 @@ class _AlertWindowScreenState extends ConsumerState<AlertWindowScreen>
             padding: const EdgeInsets.all(24),
             child: Column(
               children: [
-                // Animated bell icon
-                AlertAnimatedIcon(animation: _pulseController)
-                    .animate()
-                    .fadeIn(duration: 300.ms)
-                    .scale(begin: const Offset(0.5, 0.5)),
+                // Animated icon (Lock or Bell)
+                if (_isLocked)
+                  Icon(Icons.lock_rounded, size: 80, color: colorScheme.primary)
+                      .animate(onPlay: (c) => c.repeat(reverse: true))
+                      .scale(
+                        begin: const Offset(0.9, 0.9),
+                        end: const Offset(1.1, 1.1),
+                        duration: 1500.ms,
+                      )
+                else
+                  AlertAnimatedIcon(animation: _pulseController)
+                      .animate()
+                      .fadeIn(duration: 300.ms)
+                      .scale(begin: const Offset(0.5, 0.5)),
 
                 const SizedBox(height: 24),
+
                 // Reminder title
                 Text(
-                      widget.reminder.name,
-                      style: theme.textTheme.headlineSmall?.copyWith(
-                        fontWeight: FontWeight.w700,
-                        color: colorScheme.onSurface,
-                      ),
-                      textAlign: TextAlign.center,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    )
-                    .animate()
-                    .fadeIn(delay: 100.ms, duration: 300.ms)
-                    .slideY(begin: 0.2),
+                  _isLocked ? 'Sensitive Reminder' : widget.reminder.name,
+                  style: theme.textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: colorScheme.onSurface,
+                    fontStyle: _isLocked ? FontStyle.italic : FontStyle.normal,
+                  ),
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ).animate().fadeIn(duration: 300.ms).slideY(begin: 0.2),
 
                 const SizedBox(height: 12),
 
-                // Description if present
-                if (widget.reminder.description != null &&
+                // Description or Unlock Prompt
+                if (_isLocked)
+                  FilledButton.icon(
+                    onPressed: _unlockReminder,
+                    icon: const Icon(Icons.lock_open_rounded),
+                    label: const Text('Unlock to View'),
+                    style: FilledButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 12,
+                      ),
+                    ),
+                  ).animate().fadeIn(delay: 200.ms, duration: 300.ms)
+                else if (widget.reminder.description != null &&
                     widget.reminder.description!.isNotEmpty)
                   Text(
                         widget.reminder.description!,
@@ -189,7 +224,7 @@ class _AlertWindowScreenState extends ConsumerState<AlertWindowScreen>
 
                 const SizedBox(height: 24),
 
-                // Motivational Quote
+                // Motivational Quote (hide if locked?) -> Maybe keep it, it's nice.
                 AlertQuote(
                   quote: _quote,
                 ).animate().fadeIn(duration: 600.ms).slideY(begin: -0.2),
