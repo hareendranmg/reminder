@@ -1,4 +1,5 @@
 import 'package:drift/drift.dart';
+
 import '../app_database.dart';
 import '../tables/reminders_table.dart';
 
@@ -63,15 +64,21 @@ class ReminderDao extends DatabaseAccessor<AppDatabase>
     final startOfDay = DateTime(now.year, now.month, now.day);
     final endOfDay = startOfDay.add(const Duration(days: 1));
 
+    // For recurring reminders, check nextTriggerTime
+    // For non-recurring, check reminderDateTime
     return (select(reminders)
           ..where(
             (t) =>
-                t.reminderDateTime.isBiggerOrEqualValue(startOfDay) &
-                t.reminderDateTime.isSmallerThanValue(endOfDay),
+                (t.isRecurring.not() &
+                    t.reminderDateTime.isBiggerOrEqualValue(startOfDay) &
+                    t.reminderDateTime.isSmallerThanValue(endOfDay)) |
+                (t.isRecurring &
+                    t.nextTriggerTime.isBiggerOrEqualValue(startOfDay) &
+                    t.nextTriggerTime.isSmallerThanValue(endOfDay)),
           )
           ..orderBy([
             (t) => OrderingTerm(
-              expression: t.reminderDateTime,
+              expression: coalesce([t.nextTriggerTime, t.reminderDateTime]),
               mode: OrderingMode.asc,
             ),
           ]))
@@ -87,12 +94,16 @@ class ReminderDao extends DatabaseAccessor<AppDatabase>
     return (select(reminders)
           ..where(
             (t) =>
-                t.reminderDateTime.isBiggerOrEqualValue(startOfDay) &
-                t.reminderDateTime.isSmallerThanValue(endOfDay),
+                (t.isRecurring.not() &
+                    t.reminderDateTime.isBiggerOrEqualValue(startOfDay) &
+                    t.reminderDateTime.isSmallerThanValue(endOfDay)) |
+                (t.isRecurring &
+                    t.nextTriggerTime.isBiggerOrEqualValue(startOfDay) &
+                    t.nextTriggerTime.isSmallerThanValue(endOfDay)),
           )
           ..orderBy([
             (t) => OrderingTerm(
-              expression: t.reminderDateTime,
+              expression: coalesce([t.nextTriggerTime, t.reminderDateTime]),
               mode: OrderingMode.asc,
             ),
           ]))
@@ -103,10 +114,15 @@ class ReminderDao extends DatabaseAccessor<AppDatabase>
   Future<List<Reminder>> getUpcomingReminders() {
     final now = DateTime.now();
     return (select(reminders)
-          ..where((t) => t.reminderDateTime.isBiggerThanValue(now))
+          ..where(
+            (t) =>
+                (t.isRecurring.not() &
+                    t.reminderDateTime.isBiggerThanValue(now)) |
+                (t.isRecurring & t.nextTriggerTime.isBiggerThanValue(now)),
+          )
           ..orderBy([
             (t) => OrderingTerm(
-              expression: t.reminderDateTime,
+              expression: coalesce([t.nextTriggerTime, t.reminderDateTime]),
               mode: OrderingMode.asc,
             ),
           ]))
@@ -117,10 +133,15 @@ class ReminderDao extends DatabaseAccessor<AppDatabase>
   Stream<List<Reminder>> watchUpcomingReminders() {
     final now = DateTime.now();
     return (select(reminders)
-          ..where((t) => t.reminderDateTime.isBiggerThanValue(now))
+          ..where(
+            (t) =>
+                (t.isRecurring.not() &
+                    t.reminderDateTime.isBiggerThanValue(now)) |
+                (t.isRecurring & t.nextTriggerTime.isBiggerThanValue(now)),
+          )
           ..orderBy([
             (t) => OrderingTerm(
-              expression: t.reminderDateTime,
+              expression: coalesce([t.nextTriggerTime, t.reminderDateTime]),
               mode: OrderingMode.asc,
             ),
           ]))
