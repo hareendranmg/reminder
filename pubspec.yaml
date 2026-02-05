@@ -1,5 +1,5 @@
 name: reminder
-description: "A Material 3 reminder app for Linux with non-dismissible alert windows."
+description: "A Material 3 reminder app for Linux and Windows with non-dismissible alert windows."
 publish_to: 'none'
 version: 1.0.0
 

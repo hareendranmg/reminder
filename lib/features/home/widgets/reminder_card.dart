@@ -192,7 +192,8 @@ class _ReminderCardState extends State<ReminderCard> {
               const SizedBox(width: 12),
 
               // Actions
-              Switch(value: reminder.isActive, onChanged: widget.onToggle),
+              if (!isPast)
+                Switch(value: reminder.isActive, onChanged: widget.onToggle),
             ],
           ),
         ),
