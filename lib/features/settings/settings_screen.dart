@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../core/constants/app_constants.dart';
 import '../security/passcode_dialog.dart';
 import 'preferences_provider.dart';
 import 'providers/passcode_provider.dart';
@@ -321,7 +322,7 @@ class SettingsScreen extends ConsumerWidget {
                       children: [
                         const ListTile(
                           title: Text('Reminder'),
-                          subtitle: Text('Version 1.0.0'),
+                          subtitle: Text('Version ${AppConstants.appVersion}'),
                           leading: Icon(Icons.info_outline_rounded),
                         ),
                         const Divider(height: 1),

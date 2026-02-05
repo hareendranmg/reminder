@@ -26,7 +26,7 @@ class AppConstants {
   AppConstants._();
 
   static const String appName = 'Reminder';
-  static const String appVersion = '1.0.0';
+  static const String appVersion = '1.1.0';
 
   // Sidebar width
   static const double sidebarWidth = 280.0;

@@ -1,6 +1,6 @@
 # The value of AppId uniquely identifies this application.
 # Do not use the same AppId value in installers for other applications.
-app_id: 5B599538-42B1-4826-A479-HF079A21R65I
+app_id: 5B599538-42B2-4826-A479-HF079A21R65I
 publisher: Hareendran MG
 publisher_url: https://hareendranmg.com
 display_name: Reminder
