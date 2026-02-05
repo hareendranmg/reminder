@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 import 'package:window_manager/window_manager.dart';
 
 import '../../core/theme/app_theme.dart';
@@ -59,6 +60,7 @@ class _AlertWindowScreenState extends ConsumerState<AlertWindowScreen>
   late Map<String, String> _quote;
   bool _canDismiss = false;
   late bool _isLocked;
+  DateTime? _snoozedUntil;
 
   @override
   void initState() {
@@ -97,23 +99,28 @@ class _AlertWindowScreenState extends ConsumerState<AlertWindowScreen>
     await WindowService.closeAlertWindow(widget.windowId);
   }
 
-  void _snoozeReminder() async {
+  void _snoozeReminder(DateTime snoozeUntil) async {
     if (!_canDismiss) return;
 
-    // Calculate new time (10 minutes from now)
-    final snoozeTime = DateTime.now().add(const Duration(minutes: 10));
+    // Show feedback immediately
+    setState(() {
+      _snoozedUntil = snoozeUntil;
+    });
 
     // Update reminder in database
     ReminderModel updatedReminder;
 
     if (widget.reminder.isRecurring) {
-      updatedReminder = widget.reminder.copyWith(nextTriggerTime: snoozeTime);
+      updatedReminder = widget.reminder.copyWith(nextTriggerTime: snoozeUntil);
     } else {
-      updatedReminder = widget.reminder.copyWith(dateTime: snoozeTime);
+      updatedReminder = widget.reminder.copyWith(dateTime: snoozeUntil);
     }
 
     // We can use the global container here because we wrapped the app in ProviderScope
     await ref.read(reminderRepositoryProvider).updateReminder(updatedReminder);
+
+    // Provide visual feedback time
+    await Future.delayed(const Duration(seconds: 2));
 
     // Close the window
     await WindowService.closeAlertWindow(widget.windowId);
@@ -135,6 +142,61 @@ class _AlertWindowScreenState extends ConsumerState<AlertWindowScreen>
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+
+    // Show snooze feedback if snooze process initiated
+    if (_snoozedUntil != null) {
+      return Scaffold(
+        backgroundColor: colorScheme.surface,
+        body: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.check_circle_rounded,
+                size: 64,
+                color: colorScheme.primary,
+              ).animate().scale(duration: 300.ms, curve: Curves.easeOutBack),
+              const SizedBox(height: 24),
+              Text(
+                'Snoozed until',
+                style: theme.textTheme.titleMedium?.copyWith(
+                  color: colorScheme.onSurfaceVariant,
+                ),
+              ).animate().fadeIn(delay: 100.ms),
+              const SizedBox(height: 8),
+              Builder(
+                builder: (context) {
+                  final now = DateTime.now();
+                  final snoozeTime = _snoozedUntil!;
+                  final isSameDay =
+                      now.year == snoozeTime.year &&
+                      now.month == snoozeTime.month &&
+                      now.day == snoozeTime.day;
+
+                  String formattedTime;
+                  if (isSameDay) {
+                    formattedTime = DateFormat('h:mm a').format(snoozeTime);
+                  } else {
+                    formattedTime = DateFormat(
+                      'MMM d, h:mm a',
+                    ).format(snoozeTime);
+                  }
+
+                  return Text(
+                    formattedTime,
+                    style: theme.textTheme.headlineMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: colorScheme.onSurface,
+                    ),
+                    textAlign: TextAlign.center,
+                  ).animate().fadeIn(delay: 200.ms).slideY(begin: 0.2);
+                },
+              ),
+            ],
+          ),
+        ),
+      );
+    }
 
     return Scaffold(
       backgroundColor: colorScheme.surface,
@@ -170,7 +232,12 @@ class _AlertWindowScreenState extends ConsumerState<AlertWindowScreen>
                       .scale(begin: const Offset(0.5, 0.5)),
 
                 const SizedBox(height: 24),
-
+                // Time info
+                const AlertTimeInfo().animate().fadeIn(
+                  delay: 300.ms,
+                  duration: 300.ms,
+                ),
+                Spacer(),
                 // Reminder title
                 Text(
                   _isLocked ? 'Sensitive Reminder' : widget.reminder.name,
@@ -215,12 +282,6 @@ class _AlertWindowScreenState extends ConsumerState<AlertWindowScreen>
                       .slideY(begin: 0.2),
 
                 const Spacer(),
-
-                // Time info
-                const AlertTimeInfo().animate().fadeIn(
-                  delay: 300.ms,
-                  duration: 300.ms,
-                ),
 
                 const SizedBox(height: 24),
 

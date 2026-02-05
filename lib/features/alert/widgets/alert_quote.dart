@@ -21,13 +21,13 @@ class AlertQuote extends StatelessWidget {
         children: [
           Text(
             '"${quote['quote']}"',
-            style: theme.textTheme.headlineSmall,
+            style: theme.textTheme.bodyMedium,
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 4),
           Text(
             '- ${quote['author']}',
-            style: theme.textTheme.bodyMedium,
+            style: theme.textTheme.bodySmall,
             textAlign: TextAlign.center,
           ),
         ],
