@@ -281,12 +281,11 @@ class SettingsScreen extends ConsumerWidget {
                               ),
                             );
 
-                            if (newPasscode != null &&
-                                newPasscode.isNotEmpty &&
-                                context.mounted) {
+                            if (newPasscode != null && newPasscode.isNotEmpty) {
                               await ref
                                   .read(passcodeProvider.notifier)
                                   .setPasscode(newPasscode);
+                              if (!context.mounted) return;
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
                                   content: Text(
