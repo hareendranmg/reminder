@@ -127,54 +127,7 @@ class ReminderModel {
       return dateTime;
     }
 
-    DateTime nextTime = dateTime;
-
-    // Optimization: If baseTime is far in the future, jump closer directly
-    // to avoid excessive loops.
-    if (baseTime.isAfter(nextTime)) {
-      if (recurringType == RecurringType.months) {
-        // Approximate jump for months
-        int totalMonths =
-            (baseTime.year - nextTime.year) * 12 +
-            baseTime.month -
-            nextTime.month;
-        if (totalMonths > recurringInterval!) {
-          // Leave some buffer for the exact calculation loop
-          int cycles = (totalMonths / recurringInterval!).floor();
-          if (cycles > 1) {
-            nextTime = _addMonths(nextTime, (cycles - 1) * recurringInterval!);
-          }
-        }
-      } else {
-        // Precise jump for fixed duration types
-        Duration? intervalDuration;
-        switch (recurringType!) {
-          case RecurringType.minutes:
-            intervalDuration = Duration(minutes: recurringInterval!);
-            break;
-          case RecurringType.hours:
-            intervalDuration = Duration(hours: recurringInterval!);
-            break;
-          case RecurringType.days:
-            intervalDuration = Duration(days: recurringInterval!);
-            break;
-          case RecurringType.weeks:
-            intervalDuration = Duration(days: recurringInterval! * 7);
-            break;
-          case RecurringType.months:
-            break; // Handled above
-        }
-
-        if (intervalDuration != null) {
-          final diff = baseTime.difference(nextTime);
-          if (diff > intervalDuration) {
-            final cycles =
-                (diff.inMilliseconds / intervalDuration.inMilliseconds).floor();
-            nextTime = nextTime.add(intervalDuration * cycles);
-          }
-        }
-      }
-    }
+    DateTime nextTime = nextTriggerTime ?? dateTime;
 
     // Keep adding intervals until we're in the future
     while (nextTime.isBefore(baseTime) || nextTime.isAtSameMomentAs(baseTime)) {
