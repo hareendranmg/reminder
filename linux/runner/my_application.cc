@@ -17,6 +17,15 @@ struct _MyApplication {
 
 G_DEFINE_TYPE(MyApplication, my_application, GTK_TYPE_APPLICATION)
 
+// Single-instance: reference to main window so we can present it on second launch.
+static GtkWindow* main_window = nullptr;
+
+static void on_main_window_destroyed(GtkWidget* widget, gpointer user_data) {
+  (void)widget;
+  (void)user_data;
+  main_window = nullptr;
+}
+
 // Called when first Flutter frame received.
 static void first_frame_cb(MyApplication* self, FlView* view) {
   gtk_widget_show(gtk_widget_get_toplevel(GTK_WIDGET(view)));
@@ -25,8 +34,19 @@ static void first_frame_cb(MyApplication* self, FlView* view) {
 // Implements GApplication::activate.
 static void my_application_activate(GApplication* application) {
   MyApplication* self = MY_APPLICATION(application);
+
+  // Single-instance: if we already have a main window (e.g. from autolaunch or
+  // previous open), present it instead of creating another (avoids multiple
+  // tray icons and brings the existing window to front).
+  if (main_window != nullptr) {
+    gtk_window_present(main_window);
+    return;
+  }
+
   GtkWindow* window =
       GTK_WINDOW(gtk_application_window_new(GTK_APPLICATION(application)));
+  main_window = window;
+  g_signal_connect(G_OBJECT(window), "destroy", G_CALLBACK(on_main_window_destroyed), nullptr);
 
   // Use a header bar when running in GNOME as this is the common style used
   // by applications and is the setup most users will be using (e.g. Ubuntu
@@ -149,7 +169,8 @@ MyApplication* my_application_new() {
   // the application to be recognized beyond its binary name.
   g_set_prgname(APPLICATION_ID);
 
+  // Omit G_APPLICATION_NON_UNIQUE so only one instance runs; second launch
+  // activates the existing process and we present the main window (see activate).
   return MY_APPLICATION(g_object_new(my_application_get_type(),
-                                     "application-id", APPLICATION_ID, "flags",
-                                     G_APPLICATION_NON_UNIQUE, nullptr));
+                                     "application-id", APPLICATION_ID, nullptr));
 }
