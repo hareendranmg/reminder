@@ -328,7 +328,7 @@ class SettingsScreen extends ConsumerWidget {
                               return versionAsync.when(
                                 data: (version) => Text('Version $version'),
                                 loading: () => const Text('Version ...'),
-                                error: (_, __) => const Text('Version Unknown'),
+                                error: (_, _) => const Text('Version Unknown'),
                               );
                             },
                           ),

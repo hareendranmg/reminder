@@ -19,7 +19,7 @@ A modern, Material 3 design reminder application built for Linux and Windows usi
 ### 📅 Smart Reminders
 - **Schedule Anywhere**: Create reminders with specific dates and times.
 - **Persistent Alerts**: Reminder windows stay on top and cannot be easily dismissed until acknowledged or snoozed.
-- **Snooze Options**: Flexible snooze durations (5min, 10min, 15min, 30min).
+- **Snooze Options**: Flexible snooze durations (5min, 10min, 30min, 1hr) or pick a custom date and time.
 
 ### 🔒 Privacy & Security
 - **Sensitive Reminders**: Mark specific reminders as "Sensitive".
@@ -36,6 +36,7 @@ A modern, Material 3 design reminder application built for Linux and Windows usi
 - **Local Database**: Built with `Drift` for robust SQLite local storage.
 - **State Management**: Powered by `Riverpod`.
 - **Desktop Native**: Utilizes `window_manager` and `desktop_multi_window` for a native desktop feel.
+- **Dynamic Versioning**: App version is automatically synced with `pubspec.yaml`.
 
 ## Getting Started
 

@@ -117,6 +117,8 @@ class AlertControls extends StatelessWidget {
         ),
       );
 
+      if (!context.mounted) return;
+
       if (time != null) {
         final selectedDateTime = DateTime(
           date.year,
