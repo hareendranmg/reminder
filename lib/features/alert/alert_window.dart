@@ -107,17 +107,17 @@ class _AlertWindowScreenState extends ConsumerState<AlertWindowScreen>
       _snoozedUntil = snoozeUntil;
     });
 
-    // Update reminder in database
-    ReminderModel updatedReminder;
-
-    if (widget.reminder.isRecurring) {
-      updatedReminder = widget.reminder.copyWith(nextTriggerTime: snoozeUntil);
+    // Update reminder in database: for recurring, only set nextTriggerTime to snooze
+    // time so the original schedule anchor is preserved when we acknowledge.
+    if (widget.reminder.isRecurring && widget.reminder.id != null) {
+      await ref
+          .read(reminderRepositoryProvider)
+          .setNextTriggerTime(widget.reminder.id!, snoozeUntil);
     } else {
-      updatedReminder = widget.reminder.copyWith(dateTime: snoozeUntil);
+      final updatedReminder =
+          widget.reminder.copyWith(dateTime: snoozeUntil);
+      await ref.read(reminderRepositoryProvider).updateReminder(updatedReminder);
     }
-
-    // We can use the global container here because we wrapped the app in ProviderScope
-    await ref.read(reminderRepositoryProvider).updateReminder(updatedReminder);
 
     // Provide visual feedback time
     await Future.delayed(const Duration(seconds: 2));

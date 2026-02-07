@@ -140,12 +140,18 @@ class ReminderRepository {
     await _database.reminderDao.toggleReminderActive(id, isActive);
   }
 
-  /// Update next trigger time after reminder fires
+  /// Update next trigger time after reminder fires (uses original schedule anchor).
   Future<void> updateNextTriggerTime(ReminderModel reminder) async {
     if (reminder.id == null || !reminder.isRecurring) return;
 
     final nextTime = reminder.calculateNextTriggerTime();
     await _database.reminderDao.updateNextTriggerTime(reminder.id!, nextTime);
+  }
+
+  /// Set next trigger time explicitly (e.g. when snoozing recurring reminder).
+  /// Use this instead of [updateReminder] when snoozing so the snooze time is preserved.
+  Future<void> setNextTriggerTime(int id, DateTime nextTime) async {
+    await _database.reminderDao.updateNextTriggerTime(id, nextTime);
   }
 
   /// Get reminders filtered by type

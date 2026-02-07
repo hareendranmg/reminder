@@ -119,7 +119,10 @@ class ReminderModel {
     );
   }
 
-  /// Calculate next trigger time for recurring reminders
+  /// Calculate next trigger time for recurring reminders.
+  /// Always uses [dateTime] (original schedule) as the anchor, not [nextTriggerTime],
+  /// so that after a snooze the next occurrence stays on the intended schedule
+  /// (e.g. 9:00 -> snooze to 9:10 -> acknowledge -> next at 10:00, not 10:10).
   DateTime calculateNextTriggerTime([DateTime? fromTime]) {
     final baseTime = fromTime ?? DateTime.now();
 
@@ -127,7 +130,8 @@ class ReminderModel {
       return dateTime;
     }
 
-    DateTime nextTime = nextTriggerTime ?? dateTime;
+    // Use original schedule anchor so snooze does not shift the recurrence.
+    DateTime nextTime = dateTime;
 
     // Keep adding intervals until we're in the future
     while (nextTime.isBefore(baseTime) || nextTime.isAtSameMomentAs(baseTime)) {
