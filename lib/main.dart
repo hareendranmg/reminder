@@ -46,7 +46,10 @@ Future<void> main(List<String> args) async {
         await windowManager.setMinimizable(false);
         await windowManager.setMaximizable(false);
         await windowManager.center();
-        await windowManager.setTitle('Reminder: ${reminder.name}');
+        final alertTitle = reminder.isSensitive
+            ? 'Sensitive Reminder'
+            : 'Reminder: ${reminder.name}';
+        await windowManager.setTitle(alertTitle);
 
         runApp(
           ProviderScope(
