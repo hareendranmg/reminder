@@ -90,10 +90,6 @@ class SchedulerService {
 
     // Don't schedule past reminders - they should be handled elsewhere
     // BUT if the reminder is active and just slightly past due (or missed), trigger it now
-    if (duration == null) {
-      return;
-    }
-
     if (duration.isNegative) {
       debugPrint(
         'Triggering overdue active reminder immediately: ${reminder.name} (overdue by ${duration.abs()})',
