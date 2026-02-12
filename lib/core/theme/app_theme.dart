@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 class AppTheme {
+  AppTheme._();
   static const _seedColor = Color(0xFF1A73E8); // Google Blue
 
   static ThemeData get lightTheme {

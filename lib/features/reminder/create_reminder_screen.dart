@@ -200,7 +200,7 @@ class _CreateReminderScreenState extends ConsumerState<CreateReminderScreen> {
       ),
     );
 
-    if (confirmed == true && mounted) {
+    if ((confirmed ?? false) && mounted) {
       setState(() => _isLoading = true);
       try {
         await ref

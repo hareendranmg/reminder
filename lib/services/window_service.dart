@@ -10,7 +10,8 @@ import '../core/constants/app_constants.dart';
 import '../data/models/reminder.dart';
 
 /// Service for managing windows
-class WindowService {
+abstract class WindowService {
+  WindowService._();
   static const String _alertWindowArg = 'alert';
 
   /// Initialize the main window
@@ -124,7 +125,5 @@ class WindowService {
   }
 
   /// Check if main window is visible
-  static Future<bool> isVisible() async {
-    return await windowManager.isVisible();
-  }
+  static Future<bool> isVisible() => windowManager.isVisible();
 }

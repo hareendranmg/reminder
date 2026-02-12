@@ -1,11 +1,15 @@
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
+
 import '../../core/constants/app_constants.dart';
 import '../database/app_database.dart' as db;
 
 /// Reminder model for use throughout the app
+@immutable
 class ReminderModel {
   final int? id;
+  // ... (I need to be careful with replace_file_content context, better use smaller chunks)
   final String name;
   final String? description;
   final bool isRecurring;
@@ -113,7 +117,8 @@ class ReminderModel {
   String toJsonString() => jsonEncode(toJson());
 
   /// Decode from JSON string
-  static ReminderModel fromJsonString(String jsonString) {
+  /// Decode from JSON string
+  factory ReminderModel.fromJsonString(String jsonString) {
     return ReminderModel.fromJson(
       jsonDecode(jsonString) as Map<String, dynamic>,
     );
@@ -168,8 +173,8 @@ class ReminderModel {
     }
 
     // Handle month-end edge cases (e.g., Jan 31 + 1 month = Feb 28/29)
-    int maxDay = DateTime(newYear, newMonth + 1, 0).day;
-    int newDay = date.day > maxDay ? maxDay : date.day;
+    final maxDay = DateTime(newYear, newMonth + 1, 0).day;
+    final newDay = date.day > maxDay ? maxDay : date.day;
 
     return DateTime(
       newYear,

@@ -57,6 +57,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   }
 
   @override
+  // ignore: avoid_void_async
   void onWindowClose() async {
     // Minimize to tray instead of closing
     await WindowService.minimizeToTray();

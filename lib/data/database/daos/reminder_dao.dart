@@ -8,7 +8,7 @@ part 'reminder_dao.g.dart';
 @DriftAccessor(tables: [Reminders])
 class ReminderDao extends DatabaseAccessor<AppDatabase>
     with _$ReminderDaoMixin {
-  ReminderDao(super.db);
+  ReminderDao(super.attachedDatabase);
 
   /// Get all reminders ordered by date
   Future<List<Reminder>> getAllReminders() {
@@ -223,7 +223,7 @@ class ReminderDao extends DatabaseAccessor<AppDatabase>
   }
 
   /// Toggle reminder active status
-  Future<int> toggleReminderActive(int id, bool isActive) {
+  Future<int> toggleReminderActive(int id, {required bool isActive}) {
     return (update(reminders)..where((t) => t.id.equals(id))).write(
       RemindersCompanion(
         isActive: Value(isActive),

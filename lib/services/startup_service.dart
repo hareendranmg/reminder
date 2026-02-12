@@ -13,7 +13,7 @@ class StartupService {
   Future<void> init() async {
     if (kIsWeb) return;
 
-    PackageInfo packageInfo = await PackageInfo.fromPlatform();
+    final packageInfo = await PackageInfo.fromPlatform();
 
     launchAtStartup.setup(
       appName: packageInfo.appName,
@@ -36,12 +36,10 @@ class StartupService {
     await launchAtStartup.disable();
   }
 
-  Future<bool> isEnabled() async {
-    return await launchAtStartup.isEnabled();
-  }
+  Future<bool> isEnabled() => launchAtStartup.isEnabled();
 
   Future<void> toggle() async {
-    bool enabled = await isEnabled();
+    final enabled = await isEnabled();
     if (enabled) {
       await disable();
     } else {

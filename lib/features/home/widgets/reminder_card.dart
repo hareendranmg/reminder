@@ -50,7 +50,7 @@ class _ReminderCardState extends State<ReminderCard> {
                   const PasscodeVerificationDialog(title: 'Unlock Reminder'),
             );
 
-            if (verified == true) {
+            if (verified ?? false) {
               widget.onTap?.call();
             }
           } else {

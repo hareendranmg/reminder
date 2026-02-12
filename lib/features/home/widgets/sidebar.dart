@@ -17,7 +17,7 @@ class Sidebar extends ConsumerWidget {
     final upcomingCount = ref.watch(upcomingRemindersCountProvider);
     final currentView = ref.watch(currentViewProvider);
 
-    return Container(
+    return ColoredBox(
       color: colorScheme.surfaceContainerLow,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

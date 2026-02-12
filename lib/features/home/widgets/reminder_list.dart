@@ -185,7 +185,7 @@ class ReminderList extends ConsumerWidget {
     if (reminder.id != null) {
       ref
           .read(reminderActionsProvider.notifier)
-          .toggleActive(reminder.id!, isActive);
+          .toggleActive(reminder.id!, isActive: isActive);
     }
   }
 }

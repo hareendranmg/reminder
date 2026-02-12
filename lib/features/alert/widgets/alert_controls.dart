@@ -16,10 +16,10 @@ class AlertControls extends StatelessWidget {
     if (onSnooze == null) return;
 
     final now = DateTime.now();
-    final RenderBox button = context.findRenderObject() as RenderBox;
-    final RenderBox overlay =
-        Navigator.of(context).overlay!.context.findRenderObject() as RenderBox;
-    final RelativeRect position = RelativeRect.fromRect(
+    final button = context.findRenderObject()! as RenderBox;
+    final overlay =
+        Navigator.of(context).overlay!.context.findRenderObject()! as RenderBox;
+    final position = RelativeRect.fromRect(
       Rect.fromPoints(
         button.localToGlobal(Offset.zero, ancestor: overlay),
         button.localToGlobal(
@@ -92,7 +92,7 @@ class AlertControls extends StatelessWidget {
     if (selected != null) {
       if (selected == -1) {
         if (context.mounted) {
-          _pickCustomTime(context);
+          await _pickCustomTime(context);
         }
       } else {
         onSnooze!(now.add(Duration(minutes: selected)));

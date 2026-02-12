@@ -30,7 +30,7 @@ class TrayService with TrayListener {
   }
 
   Future<void> _updateContextMenu({String? nextReminderText}) async {
-    List<MenuItem> items = [
+    final items = [
       MenuItem(
         key: 'next_reminder',
         label: nextReminderText ?? 'Next: None',
@@ -62,7 +62,11 @@ class TrayService with TrayListener {
   void Function()? onAddReminderRequest;
 
   @override
-  void onTrayMenuItemClick(MenuItem menuItem) async {
+  void onTrayMenuItemClick(MenuItem menuItem) {
+    _handleTrayMenuItemClick(menuItem);
+  }
+
+  Future<void> _handleTrayMenuItemClick(MenuItem menuItem) async {
     switch (menuItem.key) {
       case 'add_reminder':
         await WindowService.restoreFromTray();

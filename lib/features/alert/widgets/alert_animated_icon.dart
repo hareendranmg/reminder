@@ -10,7 +10,7 @@ class AlertAnimatedIcon extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
 
     return Padding(
-      padding: const EdgeInsets.all(8.0),
+      padding: const EdgeInsets.all(8),
       child: AnimatedBuilder(
         animation: animation,
         builder: (context, child) {
@@ -23,9 +23,7 @@ class AlertAnimatedIcon extends StatelessWidget {
               // Outer pulse ring
               Transform.scale(
                 scale: scale * 1.4,
-                child: Container(
-                  width: 80,
-                  height: 80,
+                child: DecoratedBox(
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     color: colorScheme.primary.withAlpha(
@@ -37,9 +35,7 @@ class AlertAnimatedIcon extends StatelessWidget {
               // Inner pulse ring
               Transform.scale(
                 scale: scale * 1.2,
-                child: Container(
-                  width: 80,
-                  height: 80,
+                child: DecoratedBox(
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     color: colorScheme.primary.withAlpha(

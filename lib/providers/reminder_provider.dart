@@ -136,9 +136,9 @@ class ReminderActionsNotifier extends StateNotifier<AsyncValue<void>> {
     }
   }
 
-  Future<void> toggleActive(int id, bool isActive) async {
+  Future<void> toggleActive(int id, {required bool isActive}) async {
     try {
-      await _repository.toggleReminderActive(id, isActive);
+      await _repository.toggleReminderActive(id, isActive: isActive);
       await _schedulerService.refresh();
     } catch (e) {
       // Silently fail for toggle operations

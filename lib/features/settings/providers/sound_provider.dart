@@ -16,12 +16,12 @@ class SoundEnabledNotifier extends StateNotifier<bool> {
 
   SoundEnabledNotifier(this._prefs) : super(_prefs.getBool(_key) ?? false);
 
-  Future<void> setSoundEnabled(bool enabled) async {
+  Future<void> setSoundEnabled({required bool enabled}) async {
     await _prefs.setBool(_key, enabled);
     state = enabled;
   }
 
   Future<void> toggle() async {
-    await setSoundEnabled(!state);
+    await setSoundEnabled(enabled: !state);
   }
 }

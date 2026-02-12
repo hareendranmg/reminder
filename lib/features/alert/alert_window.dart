@@ -94,12 +94,12 @@ class _AlertWindowScreenState extends ConsumerState<AlertWindowScreen>
     // Prevent close unless explicitly allowed
   }
 
-  void _dismissReminder() async {
+  Future<void> _dismissReminder() async {
     if (!_canDismiss) return;
     await WindowService.closeAlertWindow(widget.windowId);
   }
 
-  void _snoozeReminder(DateTime snoozeUntil) async {
+  Future<void> _snoozeReminder(DateTime snoozeUntil) async {
     if (!_canDismiss) return;
 
     // Show feedback immediately
@@ -114,9 +114,10 @@ class _AlertWindowScreenState extends ConsumerState<AlertWindowScreen>
           .read(reminderRepositoryProvider)
           .setNextTriggerTime(widget.reminder.id!, snoozeUntil);
     } else {
-      final updatedReminder =
-          widget.reminder.copyWith(dateTime: snoozeUntil);
-      await ref.read(reminderRepositoryProvider).updateReminder(updatedReminder);
+      final updatedReminder = widget.reminder.copyWith(dateTime: snoozeUntil);
+      await ref
+          .read(reminderRepositoryProvider)
+          .updateReminder(updatedReminder);
     }
 
     // Provide visual feedback time
@@ -133,7 +134,7 @@ class _AlertWindowScreenState extends ConsumerState<AlertWindowScreen>
           const PasscodeVerificationDialog(title: 'Unlock Reminder'),
     );
 
-    if (verified == true && mounted) {
+    if ((verified ?? false) && mounted) {
       setState(() => _isLocked = false);
     }
   }
@@ -200,7 +201,7 @@ class _AlertWindowScreenState extends ConsumerState<AlertWindowScreen>
 
     return Scaffold(
       backgroundColor: colorScheme.surface,
-      body: Container(
+      body: DecoratedBox(
         decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,

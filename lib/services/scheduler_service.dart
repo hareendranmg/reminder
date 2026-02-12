@@ -41,7 +41,7 @@ class SchedulerService {
         if (!reminder.isRecurring && reminder.id != null) {
           // One-time reminder in the past - deactivate it
           debugPrint('Deactivating past reminder: ${reminder.name}');
-          await _repository.toggleReminderActive(reminder.id!, false);
+          await _repository.toggleReminderActive(reminder.id!, isActive: false);
         }
       }
     } catch (e) {

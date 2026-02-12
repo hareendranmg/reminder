@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:reminder/features/tray/tray_listener.dart';
 
 import 'core/theme/app_theme.dart';
 import 'features/home/home_screen.dart';
 import 'features/settings/preferences_provider.dart';
+import 'features/tray/tray_listener.dart';
 import 'providers/scheduler_provider.dart';
 
 class ReminderApp extends ConsumerStatefulWidget {

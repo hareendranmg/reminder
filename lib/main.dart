@@ -3,7 +3,6 @@ import 'dart:convert';
 import 'package:desktop_multi_window/desktop_multi_window.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:reminder/services/startup_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:window_manager/window_manager.dart';
 
@@ -11,6 +10,7 @@ import 'app.dart';
 import 'data/models/reminder.dart';
 import 'features/alert/alert_window.dart';
 import 'features/settings/preferences_provider.dart';
+import 'services/startup_service.dart';
 import 'services/tray_service.dart';
 import 'services/window_service.dart';
 

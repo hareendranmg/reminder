@@ -88,7 +88,7 @@ class ReminderRepository {
   }
 
   /// Create a new reminder
-  Future<int> createReminder(ReminderModel reminder) async {
+  Future<int> createReminder(ReminderModel reminder) {
     final companion = RemindersCompanion(
       name: Value(reminder.name),
       description: Value(reminder.description),
@@ -136,8 +136,8 @@ class ReminderRepository {
   }
 
   /// Toggle reminder active status
-  Future<void> toggleReminderActive(int id, bool isActive) async {
-    await _database.reminderDao.toggleReminderActive(id, isActive);
+  Future<void> toggleReminderActive(int id, {required bool isActive}) async {
+    await _database.reminderDao.toggleReminderActive(id, isActive: isActive);
   }
 
   /// Update next trigger time after reminder fires (uses original schedule anchor).

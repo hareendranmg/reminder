@@ -175,7 +175,7 @@ class SettingsScreen extends ConsumerWidget {
                               onChanged: (value) {
                                 ref
                                     .read(soundEnabledProvider.notifier)
-                                    .setSoundEnabled(value);
+                                    .setSoundEnabled(enabled: value);
                               },
                             );
                           },

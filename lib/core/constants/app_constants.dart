@@ -28,8 +28,8 @@ class AppConstants {
   static const String appName = 'Reminder';
 
   // Sidebar width
-  static const double sidebarWidth = 280.0;
-  static const double sidebarCollapsedWidth = 72.0;
+  static const double sidebarWidth = 280;
+  static const double sidebarCollapsedWidth = 72;
 
   // Animation durations
   static const Duration shortAnimation = Duration(milliseconds: 200);
@@ -37,8 +37,8 @@ class AppConstants {
   static const Duration longAnimation = Duration(milliseconds: 500);
 
   // Alert window dimensions
-  static const double alertWindowWidth = 420.0;
-  static const double alertWindowHeight = 320.0;
+  static const double alertWindowWidth = 420;
+  static const double alertWindowHeight = 320;
 
   // Default intervals for recurring types
   static const Map<RecurringType, List<int>> defaultIntervals = {

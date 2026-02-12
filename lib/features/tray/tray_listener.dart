@@ -29,23 +29,22 @@ class TrayListener extends ConsumerWidget {
     final now = DateTime.now();
 
     // Filter for future reminders
-    final futureReminders = reminders.where((r) {
-      final triggerTime = r.nextTriggerTime ?? r.dateTime;
-      return triggerTime.isAfter(now);
-    }).toList();
-
-    // Sort by time
-    futureReminders.sort((a, b) {
-      final timeA = a.nextTriggerTime ?? a.dateTime;
-      final timeB = b.nextTriggerTime ?? b.dateTime;
-      return timeA.compareTo(timeB);
-    });
+    final futureReminders =
+        reminders.where((r) {
+          final triggerTime = r.nextTriggerTime ?? r.dateTime;
+          return triggerTime.isAfter(now);
+        }).toList()..sort((a, b) {
+          final timeA = a.nextTriggerTime ?? a.dateTime;
+          final timeB = b.nextTriggerTime ?? b.dateTime;
+          return timeA.compareTo(timeB);
+        });
 
     if (futureReminders.isNotEmpty) {
       final next = futureReminders.first;
       final time = next.nextTriggerTime ?? next.dateTime;
 
-      String timeString, remainingTime;
+      String timeString;
+      String remainingTime;
       if (time.day == now.day &&
           time.month == now.month &&
           time.year == now.year) {
