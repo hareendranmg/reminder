@@ -13,6 +13,7 @@ import '../data/models/reminder.dart';
 abstract class WindowService {
   WindowService._();
   static const String _alertWindowArg = 'alert';
+  static const String _summaryWindowArg = 'summary';
 
   /// Initialize the main window
   static Future<void> initializeMainWindow() async {
@@ -40,10 +41,9 @@ abstract class WindowService {
       final reminderJson = reminder.toJsonString();
 
       // Create a new window with the reminder data
-      // The alert window will configure itself via window_manager when it starts
+      // The alert window will configure itself via main.dart when it starts
       final window = await WindowController.create(
         WindowConfiguration(
-          hiddenAtLaunch: false,
           arguments: jsonEncode({
             'type': _alertWindowArg,
             'data': reminderJson,
@@ -55,7 +55,51 @@ abstract class WindowService {
       await window.show();
     } catch (e) {
       debugPrint('Error creating alert window: $e');
-      // Fallback: could show a system notification instead
+    }
+  }
+
+  /// Show a summary window for missed reminders
+  static Future<void> showSummaryWindow(List<ReminderModel> reminders) async {
+    try {
+      final remindersJson = jsonEncode(
+        reminders.map((r) => r.toJson()).toList(),
+      );
+
+      final window = await WindowController.create(
+        WindowConfiguration(
+          arguments: jsonEncode({
+            'type': _summaryWindowArg,
+            'data': remindersJson,
+          }),
+        ),
+      );
+
+      await window.show();
+    } catch (e) {
+      debugPrint('Error creating summary window: $e');
+    }
+  }
+
+  /// Initialize an alert/summary window
+  static Future<void> initializeSubWindow(int windowId) async {
+    await windowManager.ensureInitialized();
+    // Specific config can be done based on window type if needed,
+    // but general "on top" is good for both initially.
+    await windowManager.setAlwaysOnTop(true);
+    await windowManager.setPreventClose(true);
+    await windowManager.setSkipTaskbar(false);
+  }
+
+  /// Parse window arguments
+  static Map<String, dynamic>? parseWindowArgs(String args) {
+    // ... implementation depends on how main.dart passes args.
+    // If we use invokeMethod, we might not need this if we listen to method calls.
+    // But preserving existing pattern:
+    try {
+      // ...
+      return null;
+    } catch (e) {
+      return null;
     }
   }
 
@@ -111,6 +155,31 @@ abstract class WindowService {
     } catch (e) {
       return false;
     }
+  }
+
+  /// Check if running as summary window
+  static bool isSummaryWindow(List<String> args) {
+    if (args.isEmpty) return false;
+    try {
+      final decoded = jsonDecode(args.first) as Map<String, dynamic>;
+      return decoded['type'] == _summaryWindowArg;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  /// Get missed reminders from args
+  static List<ReminderModel> parseSummaryWindowArgs(String args) {
+    try {
+      final decoded = jsonDecode(args) as Map<String, dynamic>;
+      if (decoded['type'] == _summaryWindowArg) {
+        final list = jsonDecode(decoded['data'] as String) as List;
+        return list.map((e) => ReminderModel.fromJson(e)).toList();
+      }
+    } catch (e) {
+      debugPrint('Error parsing summary window args: $e');
+    }
+    return [];
   }
 
   /// Minimize main window to tray

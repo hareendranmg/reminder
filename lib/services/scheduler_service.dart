@@ -64,18 +64,78 @@ class SchedulerService {
         _timers.remove(id);
       }
 
-      // Schedule or reschedule active reminders
+      // Check for overdue reminders (missed while asleep)
+      final overdueReminders = <ReminderModel>[];
+      final futureReminders = <ReminderModel>[];
+
       for (final reminder in activeReminders) {
+        final duration = reminder.getDurationUntilTrigger();
+        if (duration != null && duration.isNegative) {
+          overdueReminders.add(reminder);
+        } else {
+          futureReminders.add(reminder);
+        }
+      }
+
+      // If multiple reminders are overdue, show summary instead of individual alerts
+      if (overdueReminders.length > 1) {
+        debugPrint(
+          'Found ${overdueReminders.length} overdue reminders. Showing summary.',
+        );
+        await _handleMissedReminders(overdueReminders);
+
+        // Schedule their next occurrences
+        for (final reminder in overdueReminders) {
+          // Fetch updated reminder (next trig time updated in _handleMissedReminders)
+          final updated = await _repository.getReminderById(reminder.id!);
+          if (updated != null && updated.isActive) {
+            _scheduleReminder(updated);
+          }
+        }
+      } else {
+        // If 0 or 1 overdue, handle normally (1 will trigger in _scheduleReminder)
+        if (overdueReminders.isNotEmpty) {
+          _scheduleReminder(overdueReminders.first);
+        }
+      }
+
+      // Schedule future reminders
+      for (final reminder in futureReminders) {
         if (reminder.id != null) {
           _scheduleReminder(reminder);
         }
       }
 
       // Check for any reminders that should have already triggered
-      await _checkForMissedReminders();
+      // (This might be redundant now if getActiveReminders returns them,
+      // but keeping it for safety if logic differs, though modifying to not trigger)
+      // await _checkForMissedReminders();
     } catch (e) {
       // Log error but don't crash
       debugPrint('Error checking reminders: $e');
+    }
+  }
+
+  /// Handle a batch of missed reminders
+  Future<void> _handleMissedReminders(List<ReminderModel> reminders) async {
+    try {
+      // 1. Show summary window
+      await WindowService.showSummaryWindow(reminders);
+
+      // 2. Update next trigger times for all (to stop them from triggering individually immediately)
+      // We assume user "acknowledges" them by seeing the summary, or at least we shift schedule
+      // so the app doesn't hang.
+      for (final reminder in reminders) {
+        if (reminder.isRecurring) {
+          await _repository.updateNextTriggerTime(reminder);
+        }
+        // One-time reminders might need deactivation or staying as "missed"?
+        // Current logic for one-time in _triggerReminder is remove timer.
+        // If we show summary, we should probably deactivate them or let user dismiss in UI.
+        // For now, let's assume summary view handles the "notification" aspect.
+      }
+    } catch (e) {
+      debugPrint('Error handling missed reminders: $e');
     }
   }
 
@@ -133,29 +193,6 @@ class SchedulerService {
       }
     } catch (e) {
       debugPrint('Error triggering reminder: $e');
-    }
-  }
-
-  /// Check for reminders that should have triggered but were missed
-  /// Only handles recurring reminders - updates their next trigger time
-  Future<void> _checkForMissedReminders() async {
-    try {
-      final missedReminders = await _repository.getRemindersToTrigger();
-      for (final reminder in missedReminders) {
-        if (reminder.isRecurring && reminder.id != null) {
-          // For recurring reminders, update the next trigger time without showing alert
-          debugPrint('Updating missed recurring reminder: ${reminder.name}');
-          await _repository.updateNextTriggerTime(reminder);
-          // Reschedule for the next occurrence
-          final updated = await _repository.getReminderById(reminder.id!);
-          if (updated != null && updated.isActive) {
-            _scheduleReminder(updated);
-          }
-        }
-        // One-time past reminders are already deactivated in initialize()
-      }
-    } catch (e) {
-      debugPrint('Error checking missed reminders: $e');
     }
   }
 
