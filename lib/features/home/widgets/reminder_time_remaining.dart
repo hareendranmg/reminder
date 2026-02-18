@@ -11,8 +11,7 @@ class ReminderTimeRemaining extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final duration = reminder.getDurationUntilTrigger();
-
-    if (duration == null) return const SizedBox.shrink();
+    if (duration.isNegative) return const SizedBox.shrink();
 
     String text;
     if (duration.inDays > 0) {
