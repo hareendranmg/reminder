@@ -12,12 +12,13 @@ import '../../data/models/reminder.dart';
 import '../../providers/reminder_provider.dart';
 import '../../services/window_service.dart';
 import '../security/passcode_dialog.dart';
+import '../settings/preferences_provider.dart';
 import 'widgets/alert_animated_icon.dart';
 import 'widgets/alert_controls.dart';
 import 'widgets/alert_quote.dart';
 import 'widgets/alert_time_info.dart';
 
-class AlertWindowApp extends StatelessWidget {
+class AlertWindowApp extends ConsumerWidget {
   final ReminderModel reminder;
   final int windowId;
 
@@ -28,13 +29,14 @@ class AlertWindowApp extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final themeMode = ref.watch(themeModeProvider);
     return MaterialApp(
       title: 'Reminder Alert',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
-      themeMode: ThemeMode.system,
+      themeMode: themeMode,
       home: AlertWindowScreen(reminder: reminder, windowId: windowId),
     );
   }

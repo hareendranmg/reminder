@@ -73,16 +73,21 @@ Future<void> main(List<String> args) async {
         runApp(
           ProviderScope(
             overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
-            child: MaterialApp(
-              debugShowCheckedModeBanner: false,
-              title: 'Missed Reminders',
-              theme: AppTheme.lightTheme,
-              darkTheme: AppTheme.darkTheme,
-              themeMode: ThemeMode.system,
-              home: MissedRemindersScreen(
-                windowId: windowId,
-                missedReminders: reminders,
-              ),
+            child: Consumer(
+              builder: (context, ref, _) {
+                final themeMode = ref.watch(themeModeProvider);
+                return MaterialApp(
+                  debugShowCheckedModeBanner: false,
+                  title: 'Missed Reminders',
+                  theme: AppTheme.lightTheme,
+                  darkTheme: AppTheme.darkTheme,
+                  themeMode: themeMode,
+                  home: MissedRemindersScreen(
+                    windowId: windowId,
+                    missedReminders: reminders,
+                  ),
+                );
+              },
             ),
           ),
         );

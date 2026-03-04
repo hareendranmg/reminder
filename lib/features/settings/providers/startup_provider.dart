@@ -1,23 +1,38 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 
 import '../../../../services/startup_service.dart';
 
+final startupServiceProvider = Provider<StartupService>((ref) {
+  return startupService;
+});
+
 final startupProvider = StateNotifierProvider<StartupNotifier, bool>((ref) {
-  return StartupNotifier();
+  final service = ref.watch(startupServiceProvider);
+  return StartupNotifier(service);
 });
 
 class StartupNotifier extends StateNotifier<bool> {
-  StartupNotifier() : super(false) {
-    _init();
+  final StartupService _service;
+
+  StartupNotifier(this._service) : super(false) {
+    init();
   }
 
-  Future<void> _init() async {
-    final isEnabled = await startupService.isEnabled();
-    state = isEnabled;
+  Future<void> init() async {
+    try {
+      final isEnabled = await _service.isEnabled();
+      state = isEnabled;
+    } catch (_) {
+      // Ignore errors in tests or unsupported platforms
+      state = false;
+    }
   }
 
   Future<void> toggle() async {
-    await startupService.toggle();
-    state = await startupService.isEnabled();
+    try {
+      await _service.toggle();
+      state = await _service.isEnabled();
+    } catch (_) {}
   }
 }

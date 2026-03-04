@@ -30,6 +30,10 @@ class _PasscodeVerificationDialogState
     if (input.isEmpty) return;
 
     if (widget.isSettingNew) {
+      if (input.length < 4) {
+        setState(() => _error = 'Passcode must be at least 4 characters');
+        return;
+      }
       // Just returning the input to be set as new passcode
       Navigator.of(context).pop(input);
       return;

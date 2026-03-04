@@ -121,6 +121,25 @@ class _CreateReminderScreenState extends ConsumerState<CreateReminderScreen> {
         _selectedTime.minute,
       );
 
+      if (!_isRecurring &&
+          dateTime.isBefore(
+            DateTime.now().subtract(const Duration(minutes: 1)),
+          )) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text(
+                'Cannot schedule a one-time reminder in the past.',
+              ),
+              backgroundColor: Theme.of(context).colorScheme.error,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+        setState(() => _isLoading = false);
+        return;
+      }
+
       final reminder = ReminderModel(
         id: widget.editingReminder?.id,
         name: _nameController.text.trim(),
