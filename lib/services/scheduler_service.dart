@@ -23,6 +23,10 @@ class SchedulerService {
     // Mark past one-time reminders as inactive (don't trigger on startup)
     await _deactivatePastOneTimeReminders();
 
+    // Refresh nextTriggerTime for recurring reminders with stale past times.
+    // This ensures they appear in Today/Upcoming filters and can be scheduled.
+    await _refreshRecurringTriggerTimes();
+
     // Initial check for reminders - only schedule future ones
     await _checkAndScheduleReminders();
 
@@ -46,6 +50,31 @@ class SchedulerService {
       }
     } catch (e) {
       debugPrint('Error deactivating past reminders: $e');
+    }
+  }
+
+  /// Refresh nextTriggerTime for all active recurring reminders whose
+  /// nextTriggerTime is in the past. Without this, recurring reminders
+  /// created on earlier days stay invisible in Today/Upcoming filters
+  /// because the DAO queries filter on nextTriggerTime.
+  Future<void> _refreshRecurringTriggerTimes() async {
+    try {
+      final activeReminders = await _repository.getActiveReminders();
+      final now = DateTime.now();
+
+      for (final reminder in activeReminders) {
+        if (reminder.isRecurring && reminder.id != null) {
+          final triggerTime = reminder.nextTriggerTime ?? reminder.dateTime;
+          if (triggerTime.isBefore(now)) {
+            debugPrint(
+              'Refreshing stale nextTriggerTime for: ${reminder.name}',
+            );
+            await _repository.updateNextTriggerTime(reminder);
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint('Error refreshing recurring trigger times: $e');
     }
   }
 
@@ -119,12 +148,8 @@ class SchedulerService {
   /// Handle a batch of missed reminders
   Future<void> _handleMissedReminders(List<ReminderModel> reminders) async {
     try {
-      // 1. Show summary window
-      await WindowService.showSummaryWindow(reminders);
-
-      // 2. Update next trigger times for all (to stop them from triggering individually immediately)
-      // We assume user "acknowledges" them by seeing the summary, or at least we shift schedule
-      // so the app doesn't hang.
+      // 1. Update DB FIRST so nextTriggerTime is always correct,
+      //    even if showing the window fails.
       for (final reminder in reminders) {
         if (reminder.isRecurring) {
           await _repository.updateNextTriggerTime(reminder);
@@ -138,6 +163,9 @@ class SchedulerService {
           }
         }
       }
+
+      // 2. Show summary window (non-critical — DB is already consistent)
+      await WindowService.showSummaryWindow(reminders);
     } catch (e) {
       debugPrint('Error handling missed reminders: $e');
     }
