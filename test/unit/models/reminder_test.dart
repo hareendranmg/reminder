@@ -344,19 +344,18 @@ void main() {
     });
 
     group('getDurationUntilTrigger', () {
-      test('returns null for past non-recurring reminder', () {
+      test('returns negative duration for past non-recurring reminder', () {
         final reminder = buildReminder(
           dateTime: DateTime.now().subtract(const Duration(hours: 1)),
         );
-        expect(reminder.getDurationUntilTrigger(), isNull);
+        expect(reminder.getDurationUntilTrigger().isNegative, isTrue);
       });
 
       test('returns positive duration for future reminder', () {
         final futureTime = DateTime.now().add(const Duration(hours: 2));
         final reminder = buildReminder(dateTime: futureTime);
         final duration = reminder.getDurationUntilTrigger();
-        expect(duration, isNotNull);
-        expect(duration!.inMinutes, greaterThan(100));
+        expect(duration.inMinutes, greaterThan(100));
       });
 
       test('uses nextTriggerTime for recurring reminders', () {
@@ -367,8 +366,7 @@ void main() {
           nextTriggerTime: futureTime,
         );
         final duration = reminder.getDurationUntilTrigger();
-        expect(duration, isNotNull);
-        expect(duration!.inMinutes, greaterThan(150));
+        expect(duration.inMinutes, greaterThan(150));
       });
 
       test(
@@ -378,7 +376,7 @@ void main() {
             isRecurring: true,
             dateTime: DateTime.now().subtract(const Duration(hours: 1)),
           );
-          expect(reminder.getDurationUntilTrigger(), isNull);
+          expect(reminder.getDurationUntilTrigger().isNegative, isTrue);
         },
       );
     });

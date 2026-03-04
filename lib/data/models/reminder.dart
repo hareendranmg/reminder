@@ -185,15 +185,12 @@ class ReminderModel {
     );
   }
 
-  /// Get duration until next trigger
-  Duration? getDurationUntilTrigger() {
+  /// Get duration until next trigger.
+  /// Returns a negative [Duration] if the trigger time is in the past,
+  /// or a positive [Duration] if it's in the future.
+  Duration getDurationUntilTrigger() {
     final triggerTime = isRecurring ? (nextTriggerTime ?? dateTime) : dateTime;
     final now = DateTime.now();
-
-    if (triggerTime.isBefore(now)) {
-      return null;
-    }
-
     return triggerTime.difference(now);
   }
 

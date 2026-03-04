@@ -70,7 +70,7 @@ class SchedulerService {
 
       for (final reminder in activeReminders) {
         final duration = reminder.getDurationUntilTrigger();
-        if (duration != null && duration.isNegative) {
+        if (duration.isNegative) {
           overdueReminders.add(reminder);
         } else {
           futureReminders.add(reminder);
@@ -151,12 +151,6 @@ class SchedulerService {
     _timers[reminder.id!]?.cancel();
 
     final duration = reminder.getDurationUntilTrigger();
-
-    // Don't schedule past reminders - they should be handled elsewhere
-    // BUT if the reminder is active and just slightly past due (or missed), trigger it now
-    if (duration == null) {
-      return;
-    }
 
     if (duration.isNegative) {
       debugPrint(

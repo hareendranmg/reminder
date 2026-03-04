@@ -25,6 +25,12 @@ class _PasscodeVerificationDialogState
   final TextEditingController _controller = TextEditingController();
   String? _error;
 
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
   void _submit() {
     final input = _controller.text.trim();
     if (input.isEmpty) return;
