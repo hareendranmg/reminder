@@ -128,11 +128,15 @@ class SchedulerService {
       for (final reminder in reminders) {
         if (reminder.isRecurring) {
           await _repository.updateNextTriggerTime(reminder);
+        } else {
+          // Deactivate one-time reminders so they don't trigger again
+          if (reminder.id != null) {
+            await _repository.toggleReminderActive(
+              reminder.id!,
+              isActive: false,
+            );
+          }
         }
-        // One-time reminders might need deactivation or staying as "missed"?
-        // Current logic for one-time in _triggerReminder is remove timer.
-        // If we show summary, we should probably deactivate them or let user dismiss in UI.
-        // For now, let's assume summary view handles the "notification" aspect.
       }
     } catch (e) {
       debugPrint('Error handling missed reminders: $e');
@@ -188,8 +192,11 @@ class SchedulerService {
           _scheduleReminder(updatedReminder);
         }
       } else {
-        // For one-time reminders, remove the timer
+        // For one-time reminders, remove the timer and deactivate
         _timers.remove(reminder.id);
+        if (reminder.id != null) {
+          await _repository.toggleReminderActive(reminder.id!, isActive: false);
+        }
       }
     } catch (e) {
       debugPrint('Error triggering reminder: $e');

@@ -176,10 +176,8 @@ class MissedRemindersScreen extends ConsumerWidget {
                 Expanded(
                   child: OutlinedButton.icon(
                     onPressed: () async {
-                      // TODO(snooze): Implement proper snooze logic (update trigger times)
-                      // For now, dismissed to avoid stuck window.
                       if (context.mounted) {
-                        await _dismissAll(context, ref);
+                        await _snoozeAll(context, ref);
                       }
                     },
                     icon: const Icon(Icons.snooze_rounded),
@@ -228,27 +226,34 @@ class MissedRemindersScreen extends ConsumerWidget {
     }
   }
 
-  Future<void> _dismissAll(BuildContext context, WidgetRef ref) async {
-    // Logic to update next trigger times should ideally be handled by Scheduler/Caller
-    // But since this is a separate window, we might need to process here.
-    // However, the caller (Scheduler) already passed these as "Missed",
-    // implying it likely already updated their nextTriggerTime to avoid immediate loop?
-    // Wait, if we just close, they are "acknowledged".
-
-    // Actually, SchedulerService Option 1/2 implies we update them to future *before* showing this?
-    // OR we show this *instead* of triggering.
-    // If we show this, the reminders are still "due".
-    // We should update their nextTriggerTime here.
-
+  Future<void> _snoozeAll(BuildContext context, WidgetRef ref) async {
     final repository = ref.read(reminderRepositoryProvider);
+    final snoozeUntil = DateTime.now().add(const Duration(minutes: 10));
 
     for (final reminder in missedReminders) {
+      if (reminder.id == null) continue;
+
       if (reminder.isRecurring) {
-        await repository.updateNextTriggerTime(reminder);
+        await repository.setNextTriggerTime(reminder.id!, snoozeUntil);
+      } else {
+        // Reactivate one-time reminder and update its time
+        final updatedReminder = reminder.copyWith(
+          dateTime: snoozeUntil,
+          isActive: true,
+        );
+        await repository.updateReminder(updatedReminder);
       }
-      // If one-time, toggle active false? (Already handled by logic)
     }
 
+    if (context.mounted) {
+      await WindowService.closeAlertWindow(windowId);
+    }
+  }
+
+  Future<void> _dismissAll(BuildContext context, WidgetRef ref) async {
+    // The SchedulerService already handled updating the nextTriggerTime
+    // for recurring reminders and deactivating one-time reminders.
+    // We only need to securely close the alert window.
     if (context.mounted) {
       await WindowService.closeAlertWindow(windowId);
     }
