@@ -117,7 +117,6 @@ class ReminderModel {
   String toJsonString() => jsonEncode(toJson());
 
   /// Decode from JSON string
-  /// Decode from JSON string
   factory ReminderModel.fromJsonString(String jsonString) {
     return ReminderModel.fromJson(
       jsonDecode(jsonString) as Map<String, dynamic>,
@@ -241,11 +240,21 @@ class ReminderModel {
   @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
-    return other is ReminderModel && other.id == id;
+    if (other is! ReminderModel) return false;
+    // When both have IDs, compare by ID (database identity)
+    if (id != null && other.id != null) return id == other.id;
+    // When either has no ID (unsaved), compare by value
+    return id == other.id &&
+        name == other.name &&
+        dateTime == other.dateTime &&
+        isRecurring == other.isRecurring &&
+        isSensitive == other.isSensitive;
   }
 
   @override
-  int get hashCode => id.hashCode;
+  int get hashCode => id != null
+      ? id.hashCode
+      : Object.hash(name, dateTime, isRecurring, isSensitive);
 
   @override
   String toString() {

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:drift/drift.dart';
 
 import '../../core/constants/app_constants.dart';
@@ -9,6 +11,51 @@ class ReminderRepository {
   final AppDatabase _database;
 
   ReminderRepository(this._database);
+
+  /// Creates a stream that re-subscribes to the [streamFactory] whenever the
+  /// date changes (at midnight). This prevents stale date boundaries in
+  /// watch queries that capture `DateTime.now()` at creation time.
+  Stream<List<ReminderModel>> _dateAwareStream(
+    Stream<List<ReminderModel>> Function() streamFactory,
+  ) {
+    late StreamController<List<ReminderModel>> controller;
+    StreamSubscription<List<ReminderModel>>? innerSub;
+    Timer? midnightTimer;
+
+    void scheduleNextMidnight() {
+      final now = DateTime.now();
+      final nextMidnight = DateTime(now.year, now.month, now.day + 1);
+      final duration = nextMidnight.difference(now);
+
+      midnightTimer?.cancel();
+      midnightTimer = Timer(duration, () {
+        // Re-subscribe with fresh date boundaries
+        innerSub?.cancel();
+        innerSub = streamFactory().listen(
+          controller.add,
+          onError: controller.addError,
+        );
+        scheduleNextMidnight();
+      });
+    }
+
+    controller = StreamController<List<ReminderModel>>.broadcast(
+      onListen: () {
+        innerSub = streamFactory().listen(
+          controller.add,
+          onError: controller.addError,
+        );
+        scheduleNextMidnight();
+      },
+      onCancel: () {
+        innerSub?.cancel();
+        midnightTimer?.cancel();
+        controller.close();
+      },
+    );
+
+    return controller.stream;
+  }
 
   /// Get all reminders
   Future<List<ReminderModel>> getAllReminders() async {
@@ -42,10 +89,13 @@ class ReminderRepository {
     return entities.map((e) => ReminderModel.fromDbEntity(e)).toList();
   }
 
-  /// Watch reminders for today
+  /// Watch reminders for today (re-subscribes at midnight)
   Stream<List<ReminderModel>> watchTodayReminders() {
-    return _database.reminderDao.watchTodayReminders().map(
-      (entities) => entities.map((e) => ReminderModel.fromDbEntity(e)).toList(),
+    return _dateAwareStream(
+      () => _database.reminderDao.watchTodayReminders().map(
+        (entities) =>
+            entities.map((e) => ReminderModel.fromDbEntity(e)).toList(),
+      ),
     );
   }
 
@@ -55,10 +105,13 @@ class ReminderRepository {
     return entities.map((e) => ReminderModel.fromDbEntity(e)).toList();
   }
 
-  /// Watch upcoming reminders
+  /// Watch upcoming reminders (re-subscribes at midnight)
   Stream<List<ReminderModel>> watchUpcomingReminders() {
-    return _database.reminderDao.watchUpcomingReminders().map(
-      (entities) => entities.map((e) => ReminderModel.fromDbEntity(e)).toList(),
+    return _dateAwareStream(
+      () => _database.reminderDao.watchUpcomingReminders().map(
+        (entities) =>
+            entities.map((e) => ReminderModel.fromDbEntity(e)).toList(),
+      ),
     );
   }
 
@@ -68,10 +121,13 @@ class ReminderRepository {
     return entities.map((e) => ReminderModel.fromDbEntity(e)).toList();
   }
 
-  /// Watch past reminders
+  /// Watch past reminders (re-subscribes at midnight)
   Stream<List<ReminderModel>> watchPastReminders() {
-    return _database.reminderDao.watchPastReminders().map(
-      (entities) => entities.map((e) => ReminderModel.fromDbEntity(e)).toList(),
+    return _dateAwareStream(
+      () => _database.reminderDao.watchPastReminders().map(
+        (entities) =>
+            entities.map((e) => ReminderModel.fromDbEntity(e)).toList(),
+      ),
     );
   }
 

@@ -415,5 +415,32 @@ void main() {
         expect(reminder.shouldTriggerNow(), isTrue);
       });
     });
+
+    group('equality with null id', () {
+      test('two unsaved reminders with same values are equal', () {
+        final a = buildReminder(name: 'Same', dateTime: now);
+        final b = buildReminder(name: 'Same', dateTime: now);
+        expect(a, equals(b));
+        expect(a.hashCode, equals(b.hashCode));
+      });
+
+      test('two unsaved reminders with different names are NOT equal', () {
+        final a = buildReminder(name: 'Alpha', dateTime: now);
+        final b = buildReminder(name: 'Beta', dateTime: now);
+        expect(a, isNot(equals(b)));
+      });
+
+      test('two saved reminders with same id are equal regardless of name', () {
+        final a = buildReminder(id: 1, name: 'Old', dateTime: now);
+        final b = buildReminder(id: 1, name: 'New', dateTime: now);
+        expect(a, equals(b));
+      });
+
+      test('saved and unsaved reminders are never equal', () {
+        final saved = buildReminder(id: 1, name: 'Test', dateTime: now);
+        final unsaved = buildReminder(name: 'Test', dateTime: now);
+        expect(saved, isNot(equals(unsaved)));
+      });
+    });
   });
 }
