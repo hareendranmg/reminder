@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import '../../../data/models/reminder.dart';
 import '../../../providers/reminder_provider.dart';
 import '../../../services/window_service.dart';
+import '../settings/preferences_provider.dart';
 
 class MissedRemindersScreen extends ConsumerWidget {
   final int windowId;
@@ -181,7 +182,12 @@ class MissedRemindersScreen extends ConsumerWidget {
                       }
                     },
                     icon: const Icon(Icons.snooze_rounded),
-                    label: const Text('Snooze All 10m'),
+                    label: Consumer(
+                      builder: (context, ref, _) {
+                        final snoozeMins = ref.watch(snoozeDurationProvider);
+                        return Text('Snooze All ${snoozeMins}m');
+                      },
+                    ),
                     style: OutlinedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 16),
                     ),
@@ -228,20 +234,19 @@ class MissedRemindersScreen extends ConsumerWidget {
 
   Future<void> _snoozeAll(BuildContext context, WidgetRef ref) async {
     final repository = ref.read(reminderRepositoryProvider);
-    final snoozeUntil = DateTime.now().add(const Duration(minutes: 10));
+    final snoozeMins = ref.read(snoozeDurationProvider);
+    final snoozeUntil = DateTime.now().add(Duration(minutes: snoozeMins));
 
     for (final reminder in missedReminders) {
       if (reminder.id == null) continue;
 
-      if (reminder.isRecurring) {
-        await repository.setNextTriggerTime(reminder.id!, snoozeUntil);
-      } else {
-        // Reactivate one-time reminder and update its time
-        final updatedReminder = reminder.copyWith(
-          dateTime: snoozeUntil,
-          isActive: true,
-        );
-        await repository.updateReminder(updatedReminder);
+      // Use setNextTriggerTime for both recurring and one-time reminders
+      // instead of copyWith(dateTime:) which permanently mutates the
+      // original schedule time.
+      await repository.setNextTriggerTime(reminder.id!, snoozeUntil);
+      if (!reminder.isRecurring) {
+        // Re-activate the one-time reminder so the scheduler picks it up
+        await repository.toggleReminderActive(reminder.id!, isActive: true);
       }
     }
 

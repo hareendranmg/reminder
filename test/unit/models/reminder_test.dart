@@ -302,6 +302,45 @@ void main() {
         expect(nextTime, DateTime(2026, 2, 15, 10, 0, 0));
       });
 
+      test('large month interval (25 months) spans multiple years', () {
+        final reminder = buildReminder(
+          dateTime: DateTime(2025, 1, 15, 8, 0, 0),
+          isRecurring: true,
+          recurringType: RecurringType.months,
+          recurringInterval: 25,
+        );
+        // 25 months from Jan 2025 = Feb 2027
+        final checkTime = DateTime(2027, 1, 1);
+        final nextTime = reminder.calculateNextTriggerTime(checkTime);
+        expect(nextTime, DateTime(2027, 2, 15, 8, 0, 0));
+      });
+
+      test('36-month interval (3 years)', () {
+        final reminder = buildReminder(
+          dateTime: DateTime(2024, 6, 10, 14, 0, 0),
+          isRecurring: true,
+          recurringType: RecurringType.months,
+          recurringInterval: 36,
+        );
+        // 36 months = 3 years from Jun 2024 = Jun 2027
+        final checkTime = DateTime(2027, 5, 1);
+        final nextTime = reminder.calculateNextTriggerTime(checkTime);
+        expect(nextTime, DateTime(2027, 6, 10, 14, 0, 0));
+      });
+
+      test('14-month interval from November crosses year boundary twice', () {
+        final reminder = buildReminder(
+          dateTime: DateTime(2025, 11, 20, 9, 0, 0),
+          isRecurring: true,
+          recurringType: RecurringType.months,
+          recurringInterval: 14,
+        );
+        // 14 months from Nov 2025 = Jan 2027
+        final checkTime = DateTime(2026, 12, 1);
+        final nextTime = reminder.calculateNextTriggerTime(checkTime);
+        expect(nextTime, DateTime(2027, 1, 20, 9, 0, 0));
+      });
+
       test('leap year Feb 29 clamping', () {
         final reminder = buildReminder(
           dateTime: DateTime(2024, 1, 31, 9, 0, 0),

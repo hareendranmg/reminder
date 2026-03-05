@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:path/path.dart' as p;
 import 'package:tray_manager/tray_manager.dart';
 import 'package:window_manager/window_manager.dart';
 
@@ -20,11 +21,28 @@ class TrayService with TrayListener {
     if (_isInitialized) return;
     _isInitialized = true;
 
-    await trayManager.setIcon(
-      Platform.isWindows
-          ? 'assets/icons/app_icon.ico'
-          : 'assets/icons/app_icon.png',
-    );
+    // Resolve icon path relative to the executable so it works in both
+    // debug builds (where CWD == project root) and installed/release
+    // bundles (where CWD is typically the user's home directory).
+    final exeDir = p.dirname(Platform.resolvedExecutable);
+    final iconPath = Platform.isWindows
+        ? p.join(
+            exeDir,
+            'data',
+            'flutter_assets',
+            'assets',
+            'icons',
+            'app_icon.ico',
+          )
+        : p.join(
+            exeDir,
+            'data',
+            'flutter_assets',
+            'assets',
+            'icons',
+            'app_icon.png',
+          );
+    await trayManager.setIcon(iconPath);
     await _updateContextMenu();
     trayManager.addListener(this);
   }
@@ -61,6 +79,10 @@ class TrayService with TrayListener {
 
   void Function()? onAddReminderRequest;
 
+  /// Called when the user selects Exit from the tray menu.
+  /// Use this to run platform-specific cleanup (e.g. deleting lock files).
+  Future<void> Function()? onExitRequest;
+
   @override
   void onTrayMenuItemClick(MenuItem menuItem) {
     _handleTrayMenuItemClick(menuItem);
@@ -76,8 +98,14 @@ class TrayService with TrayListener {
         await WindowService.restoreFromTray();
         break;
       case 'exit_app':
+        // Gracefully tear down tray and window instead of hard exit(0),
+        // which would skip Flutter disposal (database flush, provider
+        // cleanup, etc.) and risk data corruption.
+        await onExitRequest?.call();
+        trayManager.removeListener(this);
+        await trayManager.destroy();
+        await windowManager.setPreventClose(false);
         await windowManager.destroy();
-        exit(0);
     }
   }
 

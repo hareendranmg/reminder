@@ -161,15 +161,13 @@ class ReminderModel {
     return nextTime;
   }
 
-  /// Add months to a DateTime, handling edge cases
+  /// Add months to a DateTime, handling edge cases.
+  /// Uses integer arithmetic instead of a loop, so it's O(1) even for
+  /// large intervals and safe against negative values.
   DateTime _addMonths(DateTime date, int months) {
-    int newMonth = date.month + months;
-    int newYear = date.year;
-
-    while (newMonth > 12) {
-      newMonth -= 12;
-      newYear++;
-    }
+    final totalMonths = date.month - 1 + months; // 0-based for div/mod
+    final newYear = date.year + totalMonths ~/ 12;
+    final newMonth = totalMonths % 12 + 1; // back to 1-based
 
     // Handle month-end edge cases (e.g., Jan 31 + 1 month = Feb 28/29)
     final maxDay = DateTime(newYear, newMonth + 1, 0).day;

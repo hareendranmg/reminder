@@ -1,8 +1,11 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:desktop_multi_window/desktop_multi_window.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:path/path.dart' as p;
+import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:window_manager/window_manager.dart';
 
@@ -99,9 +102,38 @@ Future<void> main(List<String> args) async {
   }
 
   // Main window initialization - only reaches here if no valid sub-window args
+
+  // Windows single-instance guard.  Linux already has single-instance via
+  // G_APPLICATION_FLAGS_NONE in the GTK runner.  Without this, a second
+  // instance on Windows would create duplicate tray icons and schedulers,
+  // leading to duplicate reminder alerts.
+  File? lockFile;
+  if (Platform.isWindows) {
+    final appDir = await getApplicationSupportDirectory();
+    lockFile = File(p.join(appDir.path, '.reminder.lock'));
+    if (lockFile.existsSync()) {
+      // Another instance is likely already running — exit silently.
+      debugPrint('Another instance is already running. Exiting.');
+      exit(0);
+    }
+    await lockFile.create(recursive: true);
+  }
+
   await WindowService.initializeMainWindow();
   await startupService.init();
   await trayService.init();
+
+  // Clean up the lock file when the process exits (Windows only).
+  if (Platform.isWindows && lockFile != null) {
+    // Register cleanup for tray "Exit" menu action.
+    trayService.onExitRequest = () async {
+      try {
+        if (lockFile!.existsSync()) {
+          lockFile.deleteSync();
+        }
+      } catch (_) {}
+    };
+  }
 
   runApp(
     ProviderScope(
