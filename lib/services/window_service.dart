@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:isolate';
 import 'dart:ui';
 
 import 'package:desktop_multi_window/desktop_multi_window.dart';
@@ -118,17 +119,15 @@ abstract class WindowService {
   /// Close the alert window (called when user acknowledges)
   static Future<void> closeAlertWindow(int windowId) async {
     try {
-      // Allow close and use the proper desktop_multi_window API to tear
-      // down the sub-window cleanly.  The previous approach used
-      // Isolate.current.kill() which skipped widget disposal and could
-      // crash on Windows due to orphaned ANGLE/DirectX contexts.
+      // Allow close
       await windowManager.setPreventClose(false);
-      // Use the desktop_multi_window API to hide the sub-window, then
-      // destroy it via window_manager.  The previous approach used
-      // Isolate.current.kill() which skipped disposal and could crash.
-      final wc = WindowController.fromWindowId(windowId.toString());
-      await wc.hide();
-      await windowManager.destroy();
+
+      // Hide window first to hopefully prevent "last window closed" app termination
+      await windowManager.hide();
+
+      // Instead of closing natively (which crashes GL context when main is hidden),
+      // we kill the isolate. This stops the engine cleanly enough for this use case.
+      Isolate.current.kill(priority: Isolate.immediate);
     } catch (e) {
       debugPrint('Error closing alert window: $e');
     }
