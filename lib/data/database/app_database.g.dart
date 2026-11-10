@@ -781,36 +781,34 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   List<DatabaseSchemaEntity> get allSchemaEntities => [reminders];
 }
 
-typedef $$RemindersTableCreateCompanionBuilder =
-    RemindersCompanion Function({
-      Value<int> id,
-      required String name,
-      Value<String?> description,
-      Value<bool> isRecurring,
-      Value<bool> isSensitive,
-      required DateTime reminderDateTime,
-      Value<String?> recurringType,
-      Value<int?> recurringInterval,
-      Value<DateTime?> nextTriggerTime,
-      Value<bool> isActive,
-      Value<DateTime> createdAt,
-      Value<DateTime> updatedAt,
-    });
-typedef $$RemindersTableUpdateCompanionBuilder =
-    RemindersCompanion Function({
-      Value<int> id,
-      Value<String> name,
-      Value<String?> description,
-      Value<bool> isRecurring,
-      Value<bool> isSensitive,
-      Value<DateTime> reminderDateTime,
-      Value<String?> recurringType,
-      Value<int?> recurringInterval,
-      Value<DateTime?> nextTriggerTime,
-      Value<bool> isActive,
-      Value<DateTime> createdAt,
-      Value<DateTime> updatedAt,
-    });
+typedef $$RemindersTableCreateCompanionBuilder = RemindersCompanion Function({
+  Value<int> id,
+  required String name,
+  Value<String?> description,
+  Value<bool> isRecurring,
+  Value<bool> isSensitive,
+  required DateTime reminderDateTime,
+  Value<String?> recurringType,
+  Value<int?> recurringInterval,
+  Value<DateTime?> nextTriggerTime,
+  Value<bool> isActive,
+  Value<DateTime> createdAt,
+  Value<DateTime> updatedAt,
+});
+typedef $$RemindersTableUpdateCompanionBuilder = RemindersCompanion Function({
+  Value<int> id,
+  Value<String> name,
+  Value<String?> description,
+  Value<bool> isRecurring,
+  Value<bool> isSensitive,
+  Value<DateTime> reminderDateTime,
+  Value<String?> recurringType,
+  Value<int?> recurringInterval,
+  Value<DateTime?> nextTriggerTime,
+  Value<bool> isActive,
+  Value<DateTime> createdAt,
+  Value<DateTime> updatedAt,
+});
 
 class $$RemindersTableFilterComposer
     extends Composer<_$AppDatabase, $RemindersTable> {
@@ -1095,7 +1093,16 @@ class $$RemindersTableTableManager
                 updatedAt: updatedAt,
               ),
           withReferenceMapper: (p0) => p0
-              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .map(
+                (e) => (
+                  e.readTable<$RemindersTable, Reminder>(table),
+                  BaseReferences<_$AppDatabase, $RemindersTable, Reminder>(
+                    db,
+                    table,
+                    e,
+                  ),
+                ),
+              )
               .toList(),
           prefetchHooksCallback: null,
         ),

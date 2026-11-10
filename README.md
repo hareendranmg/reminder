@@ -41,9 +41,11 @@ A modern, Material 3 design reminder application built for Linux and Windows usi
 ## Getting Started
 
 ### Prerequisites
-- [Flutter SDK](https://docs.flutter.dev/get-started/install) (3.10.8 or higher)
+- [Flutter SDK](https://docs.flutter.dev/get-started/install) (3.47 or higher, Dart 3.13+)
 - Linux or Windows environment
-- `SQLite` libraries (usually included, but may need `libsqlite3-dev` on Linux)
+  - **Windows**: Visual Studio 2022 (or Build Tools) with the "Desktop development with C++" workload
+  - **Linux**: `sudo apt-get install clang cmake ninja-build pkg-config libgtk-3-dev libx11-dev libxi-dev`
+- SQLite needs no system library: the `sqlite3` package bundles it with the app at build time
 
 ### Installation
 
