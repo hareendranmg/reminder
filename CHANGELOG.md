@@ -4,6 +4,33 @@ All notable changes to the Reminder app are documented here. The project follows
 
 ---
 
+## [1.6.1] - 2026-11-10
+
+### Fixed
+
+- **App not opening on Windows**  
+  A crash, forced shutdown or reboot left a stale `.reminder.lock` behind, and every later launch exited silently. The single-instance guard now holds an OS file lock, which Windows releases automatically when the process ends.
+- **Snooze for one-time reminders**  
+  Snoozing a one-time reminder from its alert never fired it again, and "Snooze All" in the missed-reminders window re-alerted within a minute. Snoozing now stores the snooze time and re-activates the reminder.
+- **Sensitive reminders**  
+  Their titles are no longer shown in the missed-reminders window or the tray menu.
+- **Upcoming / Past lists**  
+  Reminders now move from Upcoming to Past when their time passes, instead of at midnight.
+- **Re-enabling a paused recurring reminder**  
+  No longer fires an immediate alert for the occurrence missed while paused.
+- **Recurring schedules**  
+  Daily and weekly reminders keep their time across daylight-saving changes, and monthly reminders on the 29th–31st no longer drift to the 28th after February. Calculating the next occurrence no longer slows down for old, frequent reminders.
+- **Windows runner**  
+  Hardened UTF-16 to UTF-8 conversion of command-line arguments (Flutter template fix).
+
+### Changed
+
+- Requires Flutter 3.47 / Dart 3.13.
+- Upgraded dependencies: drift 2.35 with sqlite3 3 (SQLite is now bundled at build time; `sqlite3_flutter_libs` removed), tray_manager 0.8 (tray menu moved to its native API; Linux no longer needs `libayatana-appindicator3`), flutter_riverpod 3.5, window_manager 0.5.2, build_runner 2.17 and others.
+- Removed unused `animations` and `uuid` dependencies.
+
+---
+
 ## [1.3.0] - 2026-02-07
 
 ### Added
