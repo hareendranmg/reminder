@@ -232,6 +232,18 @@ class ReminderDao extends DatabaseAccessor<AppDatabase>
     );
   }
 
+  /// Snooze a reminder: set its next trigger time and make sure it is active
+  /// (the scheduler deactivates one-time reminders as soon as they fire).
+  Future<int> snoozeReminder(int id, DateTime until) {
+    return (update(reminders)..where((t) => t.id.equals(id))).write(
+      RemindersCompanion(
+        nextTriggerTime: Value(until),
+        isActive: const Value(true),
+        updatedAt: Value(DateTime.now()),
+      ),
+    );
+  }
+
   /// Update next trigger time for recurring reminders
   Future<int> updateNextTriggerTime(int id, DateTime nextTime) {
     return (update(reminders)..where((t) => t.id.equals(id))).write(

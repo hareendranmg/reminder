@@ -110,7 +110,9 @@ class MissedRemindersScreen extends ConsumerWidget {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  reminder.name,
+                                  reminder.isSensitive
+                                      ? 'Sensitive Reminder'
+                                      : reminder.name,
                                   style: theme.textTheme.titleMedium?.copyWith(
                                     fontWeight: FontWeight.w600,
                                   ),
@@ -240,14 +242,9 @@ class MissedRemindersScreen extends ConsumerWidget {
     for (final reminder in missedReminders) {
       if (reminder.id == null) continue;
 
-      // Use setNextTriggerTime for both recurring and one-time reminders
-      // instead of copyWith(dateTime:) which permanently mutates the
-      // original schedule time.
-      await repository.setNextTriggerTime(reminder.id!, snoozeUntil);
-      if (!reminder.isRecurring) {
-        // Re-activate the one-time reminder so the scheduler picks it up
-        await repository.toggleReminderActive(reminder.id!, isActive: true);
-      }
+      // Stores the snooze as the next trigger time (the original schedule is
+      // untouched) and re-activates one-time reminders.
+      await repository.snoozeReminder(reminder.id!, snoozeUntil);
     }
 
     if (context.mounted) {

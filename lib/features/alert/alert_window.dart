@@ -109,13 +109,12 @@ class _AlertWindowScreenState extends ConsumerState<AlertWindowScreen>
       _snoozedUntil = snoozeUntil;
     });
 
-    // Update reminder in database: use setNextTriggerTime for both recurring
-    // and non-recurring reminders. Using updateReminder() for non-recurring
-    // would set nextTriggerTime to null, losing the snooze time.
+    // Store the snooze as the next trigger time and re-activate the reminder
+    // (the scheduler deactivates one-time reminders as soon as they fire).
     if (widget.reminder.id != null) {
       await ref
           .read(reminderRepositoryProvider)
-          .setNextTriggerTime(widget.reminder.id!, snoozeUntil);
+          .snoozeReminder(widget.reminder.id!, snoozeUntil);
     }
 
     // Provide visual feedback time

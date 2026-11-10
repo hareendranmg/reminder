@@ -12,30 +12,38 @@ class ReminderRepository {
 
   ReminderRepository(this._database);
 
+  /// How often watch queries bound to the current instant ("upcoming",
+  /// "past") are re-run, so reminders move between those lists as their
+  /// time passes. Matches the scheduler's one-minute check.
+  static const Duration _nowRefreshInterval = Duration(minutes: 1);
+
   /// Creates a stream that re-subscribes to the [streamFactory] whenever the
-  /// date changes (at midnight). This prevents stale date boundaries in
-  /// watch queries that capture `DateTime.now()` at creation time.
+  /// date changes (at midnight), or every [refreshEvery] if given. This
+  /// prevents stale boundaries in watch queries that capture `DateTime.now()`
+  /// at creation time.
   Stream<List<ReminderModel>> _dateAwareStream(
-    Stream<List<ReminderModel>> Function() streamFactory,
-  ) {
+    Stream<List<ReminderModel>> Function() streamFactory, {
+    Duration? refreshEvery,
+  }) {
     late StreamController<List<ReminderModel>> controller;
     StreamSubscription<List<ReminderModel>>? innerSub;
-    Timer? midnightTimer;
+    Timer? refreshTimer;
 
-    void scheduleNextMidnight() {
+    void scheduleNextRefresh() {
       final now = DateTime.now();
-      final nextMidnight = DateTime(now.year, now.month, now.day + 1);
-      final duration = nextMidnight.difference(now);
+      final duration =
+          refreshEvery ??
+          DateTime(now.year, now.month, now.day + 1).difference(now);
 
-      midnightTimer?.cancel();
-      midnightTimer = Timer(duration, () {
-        // Re-subscribe with fresh date boundaries
+      refreshTimer?.cancel();
+      refreshTimer = Timer(duration, () {
+        // Re-subscribe with fresh boundaries
         innerSub?.cancel();
         innerSub = streamFactory().listen(
           controller.add,
           onError: controller.addError,
         );
-        scheduleNextMidnight();
+        scheduleNextRefresh();
       });
     }
 
@@ -45,11 +53,11 @@ class ReminderRepository {
           controller.add,
           onError: controller.addError,
         );
-        scheduleNextMidnight();
+        scheduleNextRefresh();
       },
       onCancel: () {
         innerSub?.cancel();
-        midnightTimer?.cancel();
+        refreshTimer?.cancel();
         controller.close();
       },
     );
@@ -105,13 +113,14 @@ class ReminderRepository {
     return entities.map((e) => ReminderModel.fromDbEntity(e)).toList();
   }
 
-  /// Watch upcoming reminders (re-subscribes at midnight)
+  /// Watch upcoming reminders (re-evaluated every minute)
   Stream<List<ReminderModel>> watchUpcomingReminders() {
     return _dateAwareStream(
       () => _database.reminderDao.watchUpcomingReminders().map(
         (entities) =>
             entities.map((e) => ReminderModel.fromDbEntity(e)).toList(),
       ),
+      refreshEvery: _nowRefreshInterval,
     );
   }
 
@@ -121,13 +130,14 @@ class ReminderRepository {
     return entities.map((e) => ReminderModel.fromDbEntity(e)).toList();
   }
 
-  /// Watch past reminders (re-subscribes at midnight)
+  /// Watch past reminders (re-evaluated every minute)
   Stream<List<ReminderModel>> watchPastReminders() {
     return _dateAwareStream(
       () => _database.reminderDao.watchPastReminders().map(
         (entities) =>
             entities.map((e) => ReminderModel.fromDbEntity(e)).toList(),
       ),
+      refreshEvery: _nowRefreshInterval,
     );
   }
 
@@ -194,6 +204,23 @@ class ReminderRepository {
   /// Toggle reminder active status
   Future<void> toggleReminderActive(int id, {required bool isActive}) async {
     await _database.reminderDao.toggleReminderActive(id, isActive: isActive);
+
+    // A recurring reminder that was paused still has the occurrence it was
+    // paused on; move it forward so re-enabling doesn't fire a stale alert.
+    if (isActive) {
+      final reminder = await getReminderById(id);
+      if (reminder != null && reminder.isRecurring) {
+        await updateNextTriggerTime(reminder);
+      }
+    }
+  }
+
+  /// Snooze a reminder until [until]. Works for both recurring and one-time
+  /// reminders: the snooze time is stored as the next trigger time (the
+  /// original schedule in `dateTime` is untouched) and the reminder is
+  /// re-activated, since one-time reminders are deactivated when they fire.
+  Future<void> snoozeReminder(int id, DateTime until) async {
+    await _database.reminderDao.snoozeReminder(id, until);
   }
 
   /// Update next trigger time after reminder fires (uses original schedule anchor).

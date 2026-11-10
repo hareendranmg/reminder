@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:desktop_multi_window/desktop_multi_window.dart';
+import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
@@ -18,6 +19,10 @@ import 'features/settings/preferences_provider.dart';
 import 'services/startup_service.dart';
 import 'services/tray_service.dart';
 import 'services/window_service.dart';
+
+/// Held open for the lifetime of the main window process (Windows only) so the
+/// exclusive lock on `.reminder.lock` stays in place.
+RandomAccessFile? _instanceLock;
 
 Future<void> main(List<String> args) async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -107,30 +112,37 @@ Future<void> main(List<String> args) async {
   // G_APPLICATION_FLAGS_NONE in the GTK runner.  Without this, a second
   // instance on Windows would create duplicate tray icons and schedulers,
   // leading to duplicate reminder alerts.
-  File? lockFile;
-  if (Platform.isWindows) {
+  // The guard holds an OS-level exclusive lock rather than relying on the
+  // file's existence, so the OS releases it automatically if the process
+  // crashes, is killed, or Windows shuts down without the tray "Exit".
+  // Skipped in debug builds: a hot restart re-runs main() in the same
+  // process, where the previous isolate's handle still holds the lock.
+  if (Platform.isWindows && !kDebugMode) {
     final appDir = await getApplicationSupportDirectory();
-    lockFile = File(p.join(appDir.path, '.reminder.lock'));
-    if (lockFile.existsSync()) {
-      // Another instance is likely already running — exit silently.
+    final lockFile = File(p.join(appDir.path, '.reminder.lock'));
+    await lockFile.create(recursive: true);
+    _instanceLock = lockFile.openSync(mode: FileMode.append);
+    try {
+      _instanceLock!.lockSync(FileLock.exclusive);
+    } on FileSystemException {
+      // Another instance holds the lock — exit silently.
       debugPrint('Another instance is already running. Exiting.');
       exit(0);
     }
-    await lockFile.create(recursive: true);
   }
 
   await WindowService.initializeMainWindow();
   await startupService.init();
   await trayService.init();
 
-  // Clean up the lock file when the process exits (Windows only).
-  if (Platform.isWindows && lockFile != null) {
-    // Register cleanup for tray "Exit" menu action.
+  // Release the lock on tray "Exit" (Windows only); the OS also releases it
+  // when the process ends for any other reason.
+  if (Platform.isWindows) {
     trayService.onExitRequest = () async {
       try {
-        if (lockFile!.existsSync()) {
-          lockFile.deleteSync();
-        }
+        _instanceLock?.unlockSync();
+        _instanceLock?.closeSync();
+        _instanceLock = null;
       } catch (_) {}
     };
   }

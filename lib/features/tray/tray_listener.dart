@@ -30,18 +30,14 @@ class TrayListener extends ConsumerWidget {
 
     // Filter for future reminders
     final futureReminders =
-        reminders.where((r) {
-          final triggerTime = r.nextTriggerTime ?? r.dateTime;
-          return triggerTime.isAfter(now);
-        }).toList()..sort((a, b) {
-          final timeA = a.nextTriggerTime ?? a.dateTime;
-          final timeB = b.nextTriggerTime ?? b.dateTime;
-          return timeA.compareTo(timeB);
-        });
+        reminders.where((r) => r.triggerTime.isAfter(now)).toList()
+          ..sort((a, b) => a.triggerTime.compareTo(b.triggerTime));
 
     if (futureReminders.isNotEmpty) {
       final next = futureReminders.first;
-      final time = next.nextTriggerTime ?? next.dateTime;
+      final time = next.triggerTime;
+      // Never expose a sensitive reminder's title outside the passcode prompt.
+      final name = next.isSensitive ? 'Sensitive Reminder' : next.name;
 
       String timeString;
       String remainingTime;
@@ -67,7 +63,7 @@ class TrayListener extends ConsumerWidget {
       }
 
       trayService.updateNextReminder(
-        'Next: ${next.name} ($timeString, $remainingTime)',
+        'Next: $name ($timeString, $remainingTime)',
       );
     } else {
       trayService.updateNextReminder('Next: None');

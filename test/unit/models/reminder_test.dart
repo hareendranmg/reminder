@@ -380,6 +380,92 @@ void main() {
         final nextTime = reminder.calculateNextTriggerTime(now);
         expect(nextTime, now.add(const Duration(hours: 1)));
       });
+
+      test('daily recurrence keeps wall-clock time months later', () {
+        final reminder = buildReminder(
+          dateTime: DateTime(2025, 1, 1, 9, 0, 0),
+          isRecurring: true,
+          recurringType: RecurringType.days,
+          recurringInterval: 1,
+        );
+        // Spans the DST changes of regions that observe them.
+        final nextTime = reminder.calculateNextTriggerTime(
+          DateTime(2025, 7, 1, 10, 0, 0),
+        );
+        expect(nextTime, DateTime(2025, 7, 2, 9, 0, 0));
+      });
+
+      test('weekly recurrence lands on the same weekday and time', () {
+        final reminder = buildReminder(
+          dateTime: DateTime(2025, 1, 6, 8, 30, 0), // Monday
+          isRecurring: true,
+          recurringType: RecurringType.weeks,
+          recurringInterval: 1,
+        );
+        final nextTime = reminder.calculateNextTriggerTime(
+          DateTime(2025, 10, 29, 12, 0, 0), // Wednesday
+        );
+        expect(nextTime, DateTime(2025, 11, 3, 8, 30, 0));
+      });
+
+      test('monthly recurrence on the 31st does not drift after Feb', () {
+        final reminder = buildReminder(
+          dateTime: DateTime(2025, 1, 31, 12, 0, 0),
+          isRecurring: true,
+          recurringType: RecurringType.months,
+          recurringInterval: 1,
+        );
+        final nextTime = reminder.calculateNextTriggerTime(
+          DateTime(2025, 3, 1, 0, 0, 0),
+        );
+        expect(nextTime, DateTime(2025, 3, 31, 12, 0, 0));
+      });
+
+      test('old minutes reminder is computed without stepping every slot', () {
+        final anchor = DateTime(2023, 1, 1, 0, 0, 0);
+        final reminder = buildReminder(
+          dateTime: anchor,
+          isRecurring: true,
+          recurringType: RecurringType.minutes,
+          recurringInterval: 1,
+        );
+        final base = DateTime(2025, 1, 1, 12, 0, 30);
+        final stopwatch = Stopwatch()..start();
+        final nextTime = reminder.calculateNextTriggerTime(base);
+        stopwatch.stop();
+        expect(nextTime, DateTime(2025, 1, 1, 12, 1, 0));
+        expect(stopwatch.elapsedMilliseconds, lessThan(50));
+      });
+
+      test('non-positive interval returns the anchor instead of looping', () {
+        final reminder = buildReminder(
+          isRecurring: true,
+          recurringType: RecurringType.minutes,
+          recurringInterval: 0,
+        );
+        expect(
+          reminder.calculateNextTriggerTime(now.add(const Duration(days: 1))),
+          now,
+        );
+      });
+    });
+
+    group('triggerTime', () {
+      test('one-time reminder uses snooze time when set', () {
+        final snoozeUntil = DateTime.now().add(const Duration(minutes: 10));
+        final reminder = buildReminder(
+          dateTime: DateTime.now().subtract(const Duration(hours: 1)),
+          nextTriggerTime: snoozeUntil,
+        );
+        expect(reminder.triggerTime, snoozeUntil);
+        expect(reminder.getDurationUntilTrigger().isNegative, isFalse);
+        expect(reminder.shouldTriggerNow(), isFalse);
+      });
+
+      test('falls back to dateTime when no next trigger is stored', () {
+        final reminder = buildReminder();
+        expect(reminder.triggerTime, now);
+      });
     });
 
     group('getDurationUntilTrigger', () {

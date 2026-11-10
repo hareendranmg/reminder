@@ -135,30 +135,68 @@ class ReminderModel {
     }
 
     // Use original schedule anchor so snooze does not shift the recurrence.
-    DateTime nextTime = dateTime;
+    if (dateTime.isAfter(baseTime)) return dateTime;
+    final interval = recurringInterval!;
+    if (interval <= 0) return dateTime;
 
-    // Keep adding intervals until we're in the future
-    while (nextTime.isBefore(baseTime) || nextTime.isAtSameMomentAs(baseTime)) {
-      switch (recurringType!) {
-        case RecurringType.minutes:
-          nextTime = nextTime.add(Duration(minutes: recurringInterval!));
-          break;
-        case RecurringType.hours:
-          nextTime = nextTime.add(Duration(hours: recurringInterval!));
-          break;
-        case RecurringType.days:
-          nextTime = nextTime.add(Duration(days: recurringInterval!));
-          break;
-        case RecurringType.weeks:
-          nextTime = nextTime.add(Duration(days: recurringInterval! * 7));
-          break;
-        case RecurringType.months:
-          nextTime = _addMonths(nextTime, recurringInterval!);
-          break;
-      }
+    // Occurrence n is computed directly from the anchor (never by stepping
+    // from the previous occurrence), so day/week/month recurrences keep their
+    // wall-clock time across DST changes and month-end clamping does not
+    // compound (Jan 31 -> Feb 28 -> Mar 31). The estimate lands at or just
+    // before the answer, so the loop runs at most a couple of times.
+    final DateTime Function(int n) occurrence;
+    final int estimate;
+    switch (recurringType!) {
+      case RecurringType.minutes:
+      case RecurringType.hours:
+        final step = recurringType == RecurringType.minutes
+            ? Duration(minutes: interval)
+            : Duration(hours: interval);
+        occurrence = (n) => dateTime.add(step * n);
+        estimate =
+            baseTime.difference(dateTime).inMicroseconds ~/ step.inMicroseconds;
+        break;
+      case RecurringType.days:
+      case RecurringType.weeks:
+        final stepDays = recurringType == RecurringType.weeks
+            ? interval * 7
+            : interval;
+        occurrence = (n) => _addDays(dateTime, stepDays * n);
+        // Subtract a day of slack for DST so the estimate never overshoots.
+        estimate =
+            (baseTime.difference(dateTime).inHours - 24) ~/ (stepDays * 24);
+        break;
+      case RecurringType.months:
+        occurrence = (n) => _addMonths(dateTime, interval * n);
+        final monthsApart =
+            (baseTime.year - dateTime.year) * 12 +
+            baseTime.month -
+            dateTime.month;
+        estimate = (monthsApart - 1) ~/ interval;
+        break;
     }
 
+    var n = estimate < 0 ? 0 : estimate;
+    var nextTime = occurrence(n);
+    while (!nextTime.isAfter(baseTime)) {
+      nextTime = occurrence(++n);
+    }
     return nextTime;
+  }
+
+  /// Add calendar days, keeping the local wall-clock time even when the
+  /// span crosses a DST change (unlike adding a fixed [Duration]).
+  DateTime _addDays(DateTime date, int days) {
+    return DateTime(
+      date.year,
+      date.month,
+      date.day + days,
+      date.hour,
+      date.minute,
+      date.second,
+      date.millisecond,
+      date.microsecond,
+    );
   }
 
   /// Add months to a DateTime, handling edge cases.
@@ -183,18 +221,21 @@ class ReminderModel {
     );
   }
 
+  /// When this reminder should next fire: [nextTriggerTime] if set (the next
+  /// recurring occurrence, or a snooze time for a one-time reminder),
+  /// otherwise [dateTime].
+  DateTime get triggerTime => nextTriggerTime ?? dateTime;
+
   /// Get duration until next trigger.
   /// Returns a negative [Duration] if the trigger time is in the past,
   /// or a positive [Duration] if it's in the future.
   Duration getDurationUntilTrigger() {
-    final triggerTime = isRecurring ? (nextTriggerTime ?? dateTime) : dateTime;
     final now = DateTime.now();
     return triggerTime.difference(now);
   }
 
   /// Check if reminder should trigger now
   bool shouldTriggerNow() {
-    final triggerTime = isRecurring ? (nextTriggerTime ?? dateTime) : dateTime;
     final now = DateTime.now();
 
     return isActive &&

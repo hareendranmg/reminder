@@ -33,7 +33,7 @@ class _ReminderCardState extends State<ReminderCard> {
     final isSensitive = reminder.isSensitive;
 
     final isPast =
-        !reminder.isRecurring && reminder.dateTime.isBefore(DateTime.now());
+        !reminder.isRecurring && reminder.triggerTime.isBefore(DateTime.now());
 
     return Card(
       elevation: 0,
@@ -202,9 +202,7 @@ class _ReminderCardState extends State<ReminderCard> {
   }
 
   String _formatDateTime(ReminderModel reminder) {
-    final dateTime = reminder.isRecurring
-        ? (reminder.nextTriggerTime ?? reminder.dateTime)
-        : reminder.dateTime;
+    final dateTime = reminder.triggerTime;
 
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
